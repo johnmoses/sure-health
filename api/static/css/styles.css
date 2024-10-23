@@ -1,0 +1,159 @@
+:root {
+    --brand-color: #ff8533;
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    display: grid;
+    place-items: center;
+}
+
+/* Styling for the chat container */
+#chat-container {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  width: 100%;
+  height: 90vh;
+  background-color: #ffffff;
+  border-radius: 5px;
+  padding: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+/* Styling for the chat area */
+#chat {
+  overflow-y: auto;
+  border: 1px solid #e1e1e1;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  min-width: 400px;
+}
+
+#chat-form {
+  overflow-y: auto;
+  border: 1px solid #e1e1e1;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  min-width: 400px;
+}
+
+/* Styling for the message input area */
+#message, .message-edit {
+  width: 100%;
+  border: 1px solid #e1e1e1;
+  border-radius: 5px;
+  padding: 5px;
+  display: block;
+}
+
+/* Styling for the message div holding html/markdown content  */
+.message-content {
+  width: 100%;
+}
+
+/* Styling for individual message wrappers */
+.message-wrapper {
+  display: flex;
+  align-items: start;
+}
+
+/* Styling for the delete and edit buttons next to messages */
+.message-wrapper button {
+  margin-top: 16px;
+  margin-right: 8px;
+}
+
+/* Styling for paragraphs, used for messages */
+p {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+/* Styling for the main container that holds the rooms list and chat */
+.main-container {
+  display: grid;
+  grid-template-columns: 20% 80%; /* Adjust the 20% as needed */
+  width: 100%;
+  height: 90vh;
+}
+
+/* Styling for the rooms list */
+#rooms-list {
+  border-right: 1px solid #e1e1e1;
+  overflow-y: auto;
+}
+
+/* Styling for the unordered list in the rooms list */
+#rooms-list ul {
+  list-style: none; /* Removes default list styling */
+  padding: 0; /* Resets default padding */
+  margin: 0; /* Resets default margin */
+}
+
+/* Styling for list items in the rooms list */
+#rooms-list li {
+  margin-bottom: 10px; /* Adds space between items */
+  padding: 5px; /* Adds padding inside each item */
+  border: 1px solid #e1e1e1; /* Adds a border around each item */
+  border-radius: 5px; /* Optional: Rounds the corners of the border */
+}
+
+/* Styling for links in the rooms list */
+#rooms-list a {
+  text-decoration: none; /* Optional: Removes underline from links */
+  color: inherit; /* Optional: Ensures link color matches the text color */
+}
+
+#form-container {
+  background-color: #ffffff;
+  border-radius: 5px;
+  padding: 15px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}

@@ -1,0 +1,15 @@
+services:
+  apix:
+    container_name: college_chats
+    platform: linux/amd64
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./.env.dev

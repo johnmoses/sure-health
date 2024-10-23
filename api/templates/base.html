@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="{{url_for('static', filename='css/styles.css')}}" rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <title>OpenChat {% block title %}{% endblock %}</title>
+
+    {% block head %} {% endblock %}
+</head>
+<body>
+    <header>
+        <nav>
+            <div>OpenChat {{ user_name }}</div>
+            <a href="{{url_for('chats.chat')}}">Chat</a> |
+            <a href="{{url_for('chats.create_chat')}}">Create Chat</a> |
+            <a href="#" id="modal-open">Join Chat</a> |
+            <a href="{{url_for('users.signout')}}">Sign out</a>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        @ OpenChat
+    </footer>
+
+</body>
+</html>

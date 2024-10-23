@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}
+Create Chat
+{% endblock %}
+
+{% block content %}
+
+<div id="form-container">
+    <h1>Create Chat</h1>
+    <form method="POST" id="create-chat-form">
+        <div>
+            <label>Name</label> <br />
+            <input id="name" name="name" type="text" />
+        </div>
+        <div>
+            <label>Description</label><br />
+            <input id="description" name="description" type="text" />
+        </div>
+        <div>
+            <button type="submit">Create</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+Chat
+{% endblock %}
+
+{% block content %}
+
+<input type="hidden" id="user_id" value="{{ user_id }}" />
+<input type="hidden" id="user_name" value="{{ user_name }}" />
+
+<div class="main-container">
+    <div id="chats-list">
+        <ul id="chats-list">
+            {% for chat in chats %}
+                <a href="{{ url_for('chats.chat', chat_id=chat.id)}}">
+                    <li>{{ chat.name }}</li>
+                </a>
+            {% endfor %}
+        </ul>
+    </div>
+    <div id="chat-container">
+        <div>
+            {% if chat %}
+            <input type="hidden" id="chat_id" value="{{ chat.id }}" />
+            <h1>{{ chat.name }}</h1>
+            <a href="{{url_for('chats.leave_chat', chat_id=chat.id)}}" id="leave-chat">Leave Chat</a>
+            {% endif %}
+
+            <p>Participants</p>
+            {% if participants %}
+                {% for participant in participants %}
+                    {{ participant.username }}
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div id="chat">
+            {% if messages %}
+                {% for message in messages %}
+                    {{ message.content }} <br />
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div id="message-form">
+            <input type="text" id="message" placeholder="Type here..." />
+        </div>
+    </div>
+</div>
+
+<div id="modal-container" class="modal">
+
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="form-container">
+        <h1>Join Chat</h1>
+        <div>
+            <form id="join-form">
+                {% for cht in all_chats %}
+                    {% if cht %}
+                    <p>{{ cht.name }} ID: {{ cht.id }}</p>
+                    {% endif %}
+                {% endfor %}
+                <input type="text" name="join_chat_id" />
+                <button>Join</button>
+            </form>
+        </div>
+    </div>
+    </div>
+  
+  </div>
+
+<script src="{{url_for('static', filename='js/chat.js')}}"></script>
+
+{% endblock %}

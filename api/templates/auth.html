@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{url_for("static", filename="css/styles.css")}}" rel="stylesheet" />
+    <title>OpenChat {% block title %}{% endblock %}</title>
+
+</head>
+<body>
+    <header>
+        <nav>
+            <div>OpenChat</div>
+            <a href="{{url_for("users.signup")}}">Sign up</a>
+            <a href="{{url_for("users.signin")}}">Sign in</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="main-container">
+            <div id="chats-list"></div>
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+        @ OpenChat
+    </footer>
+</body>
+</html>
