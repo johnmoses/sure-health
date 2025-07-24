@@ -1,9 +1,9 @@
 from app.extensions import ma
-from marshmallow import fields
+from app.monitoring.models import VitalSign
 
-class VitalSignSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    patient_id = fields.Integer(required=True)
-    type = fields.String(required=True)
-    value = fields.String(required=True)
-    timestamp = fields.DateTime(dump_only=True)
+class VitalSignSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = VitalSign
+        load_instance = True
+        include_fk = True
+        datetimeformat = '%Y-%m-%dT%H:%M:%S'

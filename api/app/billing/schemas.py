@@ -1,17 +1,30 @@
+from marshmallow import fields, validate
 from app.extensions import ma
-from marshmallow import fields
+from app.billing.models import Invoice, Payment
 
-class InvoiceSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    patient_id = fields.Integer(required=True)
+class PaymentSchema(ma.SQLAlchemyAutoSchema):
+    id = fields.Int(dump_only=True)
+    invoice_id = fields.Int(required=True)
     amount = fields.Float(required=True)
-    status = fields.String(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    due_date = fields.DateTime(required=True)
+    payment_date = fields.DateTime(dump_only=True, format='iso')
+    method = fields.Str(validate=validate.Length(max=50))
 
-class PaymentSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    invoice_id = fields.Integer(required=True)
+    class Meta:
+        model = Payment
+        load_instance = True
+        include_fk = True
+
+class InvoiceSchema(ma.SQLAlchemyAutoSchema):
+    id = fields.Int(dump_only=True)
+    patient_id = fields.Int(required=True)
     amount = fields.Float(required=True)
-    payment_date = fields.DateTime(dump_only=True)
-    method = fields.String(required=True)
+    status = fields.Str(validate=validate.OneOf(["pending", "paid", "overdue"]), default="pending")
+    created_at = fields.DateTime(dump_only=True, format='iso')
+    due_date = fields.DateTime(format='iso')
+    updated_at = fields.DateTime(dump_only=True, format='iso')
+    payments = fields.Nested(PaymentSchema, many=True, dump_only=True)
+
+    class Meta:
+        model = Invoice
+        load_instance = True
+        include_fk = True

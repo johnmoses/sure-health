@@ -1,103 +1,163 @@
+"use client";
+
+import React, { useEffect, useState, useContext, createContext } from "react";
 import Image from "next/image";
+import Link from "next/link";
+
+// Dummy types, replace with your actual user type/interface
+interface User {
+  id: number;
+  username: string;
+  role: "guest" | "patient" | "clinician" | "admin";
+}
+
+// Simple Auth context to hold user (expand with real auth logic)
+const AuthContext = createContext<{ user: User | null; loading: boolean }>({
+  user: null,
+  loading: true,
+});
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+    <AuthProvider>
+      <HomeContent />
+    </AuthProvider>
+  );
+}
+
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Simulate auth fetch - replace with real user fetch/token verification
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    const role = localStorage.getItem("user_role") as User["role"] | null;
+    if (token && role) {
+      // e.g. fetch user profile from API here
+      setUser({ id: 1, username: "JohnDoe", role });
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+function HomeContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="p-8 text-center text-lg">Loading...</div>;
+
+  if (!user) {
+    // Guest Landing Page
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
+          src="/logo.svg"
+          alt="App Logo"
           width={180}
           height={38}
           priority
         />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <h1 className="mt-4 text-3xl font-bold text-center max-w-md">
+          Welcome to Sure Health
+        </h1>
+
+        <p className="mt-2 max-w-md text-center text-gray-600">
+          Manage your health, appointments, prescriptions and more in one place.
+        </p>
+
+        <div className="mt-6 flex gap-4">
+          <Link
+            href="/auth/login"
+            className="px-6 py-3 rounded bg-blue-600 text-white text-lg font-semibold hover:bg-blue-700"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Login
+          </Link>
+          <Link
+            href="/auth/register"
+            className="px-6 py-3 rounded border border-blue-600 text-blue-600 text-lg font-semibold hover:bg-blue-50"
           >
-            Read our docs
-          </a>
+            Register
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+    );
+  }
+
+  // Authenticated user dashboard/home with role-based quick access cards
+  return (
+    <div className="min-h-screen p-8 max-w-5xl mx-auto">
+      <header className="flex justify-between items-center mb-10">
+        <h1 className="text-4xl font-extrabold">
+          Welcome back, {user.username}
+        </h1>
+        <Link href="/profile" className="text-blue-600 underline">
+          Profile
+        </Link>
+      </header>
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {/* Patient quick links */}
+        {(user.role === "patient" || user.role === "admin") && (
+          <>
+            <DashboardCard label="My Appointments" href="/appointments" />
+            <DashboardCard label="My Prescriptions" href="/prescriptions" />
+            <DashboardCard label="Vital Signs" href="/monitoring/vitals" />
+          </>
+        )}
+
+        {/* Clinician quick links */}
+        {(user.role === "clinician" || user.role === "admin") && (
+          <>
+            <DashboardCard label="Manage Appointments" href="/appointments" />
+            <DashboardCard
+              label="Patient Records"
+              href="/ehr/medical_records"
+            />
+            <DashboardCard
+              label="Prescriptions Management"
+              href="/prescriptions"
+            />
+          </>
+        )}
+
+        {/* Common links */}
+        <DashboardCard label="Chat & Support" href="/chat" />
+        <DashboardCard label="Telemedicine Sessions" href="/video" />
+        <DashboardCard label="Billing & Payments" href="/billing/invoices" />
+
+        {/* Admin exclusive */}
+        {user.role === "admin" && (
+          <>
+            <DashboardCard label="User Management" href="/admin/users" />
+            <DashboardCard label="Analytics Dashboard" href="/dashboard" />
+            <DashboardCard label="System Settings" href="/admin/settings" />
+          </>
+        )}
+      </section>
     </div>
+  );
+}
+
+function DashboardCard({ label, href }: { label: string; href: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-gray-200 p-6 text-center shadow hover:shadow-lg transition flex flex-col justify-center"
+    >
+      <span className="text-xl font-semibold">{label}</span>
+    </Link>
   );
 }

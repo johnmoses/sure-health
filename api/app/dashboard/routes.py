@@ -1,40 +1,43 @@
 from flask import Blueprint, jsonify
+from app.auth.models import User
 from app.appointments.models import Appointment
-from app.chat.models import Message, ChatRoom
+from app.billing.models import Payment, Invoice
+from app.chat.models import ChatRoom
 from app.prescriptions.models import Prescription
+from app.video.models import TelemedicineSession
 from app.monitoring.models import VitalSign
-from app.extensions import db
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
-@dashboard_bp.route("/clinician/<int:clinician_id>")
-def clinician_dashboard(clinician_id):
-    upcoming = Appointment.query.filter_by(clinician_id=clinician_id, status="scheduled").count()
-    unread_msgs = db.session.query(Message).join(ChatRoom).filter(
-        ChatRoom.appointment_id.in_(
-            db.session.query(Appointment.id).filter_by(clinician_id=clinician_id)
-        )
-    ).count()
-    rx_count = Prescription.query.filter_by(clinician_id=clinician_id).count()
+@dashboard_bp.route('/summary', methods=['GET'])
+def dashboard_summary():
+    """
+    Provides aggregated summary metrics across app parts:
+    - Total users
+    - Active appointments
+    - Total billings
+    - Active chat sessions
+    - Prescriptions count
+    - Telemedicine video sessions count
+    - Recorded vital signs count
+    """
 
-    return jsonify({
-        "upcoming_appointments": upcoming,
-        "unread_messages": unread_msgs,
-        "recent_prescriptions": rx_count
-    })
+    total_users = User.query.count()
+    active_appointments = Appointment.query.filter(Appointment.status == 'active').count()
+    total_billings = Invoice.query.count()
+    active_chat_sessions = ChatRoom.query.count()
+    prescriptions_count = Prescription.query.count()
+    video_sessions_count = TelemedicineSession.query.count()
+    vital_signs_count = VitalSign.query.count()
 
-@dashboard_bp.route("/patient/<int:patient_id>")
-def patient_dashboard(patient_id):
-    upcoming = Appointment.query.filter_by(patient_id=patient_id, status="scheduled").count()
-    msgs = Message.query.join(ChatRoom).filter(
-        ChatRoom.appointment_id.in_(
-            db.session.query(Appointment.id).filter_by(patient_id=patient_id)
-        )
-    ).order_by(Message.timestamp.desc()).limit(10).all()
-    vitals = VitalSign.query.filter_by(patient_id=patient_id).order_by(VitalSign.timestamp.desc()).limit(5).all()
+    data = {
+        "total_users": total_users,
+        "active_appointments": active_appointments,
+        "total_billings": total_billings,
+        "active_chat_sessions": active_chat_sessions,
+        "prescriptions_count": prescriptions_count,
+        "video_sessions_count": video_sessions_count,
+        "vital_signs_count": vital_signs_count,
+    }
 
-    return jsonify({
-        "upcoming_appointments": upcoming,
-        "recent_messages": [{"content": m.content, "timestamp": m.timestamp.isoformat()} for m in msgs],
-        "recent_vitals": [{"type": v.type, "value": v.value, "timestamp": v.timestamp.isoformat()} for v in vitals]
-    })
+    return jsonify(data)

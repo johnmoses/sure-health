@@ -1,12 +1,20 @@
+from marshmallow import fields, validate
 from app.extensions import ma
-from marshmallow import fields
+from app.prescriptions.models import Prescription
 
-class PrescriptionSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    patient_id = fields.Integer(required=True)
-    clinician_id = fields.Integer(required=True)
-    medication = fields.String(required=True)
-    dosage = fields.String(required=True)
-    instructions = fields.String(allow_none=True)
-    date_issued = fields.DateTime(dump_only=True)
-    date_renewed = fields.DateTime(allow_none=True, dump_only=True)
+class PrescriptionSchema(ma.SQLAlchemyAutoSchema):
+    id = fields.Int(dump_only=True)
+    patient_id = fields.Int(required=True)
+    clinician_id = fields.Int(required=True)
+    medication_name = fields.Str(required=True, validate=validate.Length(min=1, max=150))
+    dosage = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    frequency = fields.Str(validate=validate.Length(max=100))
+    duration = fields.Str(validate=validate.Length(max=100))
+    notes = fields.Str()
+    created_at = fields.DateTime(dump_only=True, format='iso')
+    updated_at = fields.DateTime(dump_only=True, format='iso')
+
+    class Meta:
+        model = Prescription
+        load_instance = True
+        include_fk = True

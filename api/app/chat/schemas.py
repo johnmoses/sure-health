@@ -1,14 +1,27 @@
 from app.extensions import ma
-from marshmallow import fields
+from app.auth.models import User
+from .models import ChatRoom, ChatMessage
+from marshmallow import fields, validate
 
-class ChatRoomSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    appointment_id = fields.Integer(required=True)
-    created_at = fields.DateTime(dump_only=True)
+class ChatMessageSchema(ma.SQLAlchemyAutoSchema):
+    timestamp = fields.DateTime(format='iso')
+    role = fields.String(validate=validate.OneOf(['clinician', 'patient', 'bot']), required=True)
+    sender_username = fields.Method('get_sender_username', dump_only=True)
 
-class MessageSchema(ma.Schema):
-    id = fields.Integer(dump_only=True)
-    chatroom_id = fields.Integer(required=True)
-    sender_id = fields.Integer(required=True)
-    content = fields.String(required=True)
-    timestamp = fields.DateTime(dump_only=True)
+    def get_sender_username(self, obj):
+        if not obj.sender_id:
+            return None
+        user = User.query.get(obj.sender_id)
+        return user.username if user else None
+
+    class Meta:
+        model = ChatMessage
+        load_instance = True
+        include_fk = True
+
+class ChatRoomSchema(ma.SQLAlchemyAutoSchema):
+    messages = fields.Nested(ChatMessageSchema, many=True, dump_only=True)
+
+    class Meta:
+        model = ChatRoom
+        load_instance = True
