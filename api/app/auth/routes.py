@@ -1,103 +1,154 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
+    create_refresh_token,
     jwt_required,
     get_jwt_identity,
-    get_jwt,
-    create_refresh_token,
+    unset_jwt_cookies,
 )
-from app.extensions import db, jwt_blacklist
-from .models import User
-from .schemas import UserSchema
+from app.extensions import db
+from app.auth.models import User
+from app.auth.schemas import UserSchema
+from datetime import timedelta
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint('auth', __name__)
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 
+# List users
+@auth_bp.route('/users', methods=['GET'])
+def list_users():
+    users = User.query.all()
+    return jsonify(users_schema.dump(users))
 
-@auth_bp.route("/register", methods=["POST"])
+# User registration
+@auth_bp.route('/register', methods=['POST'])
 def register():
-    data = request.json
-    username = data.get("username")
-    email = data.get("email")
-    password = data.get("password")
-    role = data.get("role", "clinician")
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No input data provided"}), 400
 
-    if not username or not password:
-        return jsonify({"error": "Username and password required"}), 400
+    errors = user_schema.validate(data)
+    if errors:
+        return jsonify(errors), 400
 
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "User already exists"}), 409
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({"error": "Username already exists"}), 409
 
-    user = User(username=username, email=email, role=role)
-    user.set_password(password)
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({"error": "Email already registered"}), 409
+
+    user = User(
+        username=data['username'],
+        email=data['email'],
+        role=data.get('role', 'user')  # default role if not specified
+    )
+    user.set_password(data['password'])
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({"message": "User registered successfully"}), 201
+    result = user_schema.dump(user)
+    return jsonify(result), 201
 
-
-@auth_bp.route("/login", methods=["POST"])
+# User login
+@auth_bp.route('/login', methods=['POST'])
 def login():
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
-
-    if not username or not password:
+    data = request.get_json()
+    if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password required"}), 400
 
-    user = User.query.filter_by(username=username).first()
-    if not user or not user.check_password(password):
-        return jsonify({"error": "Invalid credentials"}), 401
+    user = User.query.filter_by(username=data['username']).first()
+    if not user or not user.check_password(data['password']):
+        return jsonify({"error": "Invalid username or password"}), 401
 
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)  # <-- create refresh token
+    # Add the user's role as a claim in the JWT
+    additional_claims = {"roles": [user.role]}  # Make sure role is wrapped in a list
 
-    return jsonify(
-        {
-            "access_token": access_token,
-            "refresh_token": refresh_token,  # <-- include refresh token here
-            "user": {"id": user.id, "username": user.username, "role": user.role},
-        }
+    access_token = create_access_token(
+        identity=user.id,
+        expires_delta=timedelta(hours=1),
+        additional_claims=additional_claims
+    )
+    refresh_token = create_refresh_token(
+        identity=user.id,
+        expires_delta=timedelta(days=7),
+        additional_claims=additional_claims
     )
 
-
-@auth_bp.route("/users", methods=["GET"])
-def list_users():
-    users = User.query.all()
-    return users_schema.jsonify(users)
-
-
-@auth_bp.route("/profile", methods=["GET"])
-@jwt_required()
-def profile():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    return jsonify({"id": user.id, "username": user.username, "role": user.role})
+    return jsonify({
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": user_schema.dump(user),
+    })
 
 
-@auth_bp.route("/refresh", methods=["POST"])
-@jwt_required(refresh=True)  # This endpoint requires a valid refresh token
+# Refresh access token
+@auth_bp.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
 def refresh():
     current_user_id = get_jwt_identity()
-    new_access_token = create_access_token(identity=current_user_id)
-    return jsonify(access_token=new_access_token)
+    access_token = create_access_token(identity=current_user_id, expires_delta=timedelta(hours=1))
+    return jsonify({"access_token": access_token})
 
-
-@auth_bp.route("/logout/access", methods=["POST"])
+# Get current logged-in user's profile
+@auth_bp.route('/profile', methods=['GET'])
 @jwt_required()
-def logout_access():
-    jti = get_jwt()["jti"]
-    jwt_blacklist.add(jti)
-    return jsonify({"message": "Access token revoked"})
+def profile():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(user_schema.dump(user))
+
+# Update user info (excluding password)
+@auth_bp.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_profile():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No input data provided"}), 400
+
+    # Only allow update for certain fields here
+    allowed_fields = {'username', 'email', 'role'}
+    for field in allowed_fields:
+        if field in allowed_fields:
+            setattr(user, field, data[field])
+
+    db.session.commit()
+    return jsonify(user_schema.dump(user))
+
+# Change password
+@auth_bp.route('/change-password', methods=['POST'])
+@jwt_required()
+def change_password():
+    current_user_id = get_jwt_identity()
+    user = User.query.get(current_user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json()
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    if not old_password or not new_password:
+        return jsonify({"error": "Old and new passwords are required"}), 400
+
+    if not user.check_password(old_password):
+        return jsonify({"error": "Old password is incorrect"}), 401
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"message": "Password changed successfully"})
 
 
-@auth_bp.route("/logout/refresh", methods=["POST"])
-@jwt_required(refresh=True)
-def logout_refresh():
-    jti = get_jwt()["jti"]
-    jwt_blacklist.add(jti)
-    return jsonify({"message": "Refresh token revoked"})
+# Logout (invalidate JWT tokens by returning expired cookies - stateless JWT)
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    response = jsonify({"message": "Logged out successfully"})
+    unset_jwt_cookies(response)
+    return response

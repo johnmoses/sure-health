@@ -1,30 +1,18 @@
-from marshmallow import fields, validate
-from app.extensions import ma
-from app.billing.models import Invoice, Payment
+from marshmallow import Schema, fields
 
-class PaymentSchema(ma.SQLAlchemyAutoSchema):
+class PaymentSchema(Schema):
     id = fields.Int(dump_only=True)
     invoice_id = fields.Int(required=True)
     amount = fields.Float(required=True)
-    payment_date = fields.DateTime(dump_only=True, format='iso')
-    method = fields.Str(validate=validate.Length(max=50))
+    payment_date = fields.DateTime(dump_only=True)
+    method = fields.Str()
 
-    class Meta:
-        model = Payment
-        load_instance = True
-        include_fk = True
-
-class InvoiceSchema(ma.SQLAlchemyAutoSchema):
+class InvoiceSchema(Schema):
     id = fields.Int(dump_only=True)
     patient_id = fields.Int(required=True)
     amount = fields.Float(required=True)
-    status = fields.Str(validate=validate.OneOf(["pending", "paid", "overdue"]), default="pending")
-    created_at = fields.DateTime(dump_only=True, format='iso')
-    due_date = fields.DateTime(format='iso')
-    updated_at = fields.DateTime(dump_only=True, format='iso')
+    status = fields.Str(required=True)
+    created_at = fields.DateTime(dump_only=True)
+    due_date = fields.DateTime()
+    updated_at = fields.DateTime(dump_only=True)
     payments = fields.Nested(PaymentSchema, many=True, dump_only=True)
-
-    class Meta:
-        model = Invoice
-        load_instance = True
-        include_fk = True

@@ -1,46 +1,23 @@
-from app.agents.multi_agents import (
-    QAAgent,
-    SymptomCheckerAgent,
-    MedicationInfoAgent,
-    AppointmentSchedulerAgent,
-    LabResultsInterpreterAgent,
-    HealthEducationAgent,
-    BillingInsuranceAgent,
-    MentalHealthSupportAgent,
-    TechnicalSupportAgent,
-    PrescriptionAgent,
-    EHRAssistantAgent,
-    BillingAgent,
-    VideoSummarizerAgent,  # Newly added
-)
+from flask import current_app
+from app.agents.multi_agents import AGENTS
 
-class MultiAgentService:
-    def __init__(self):
-        # Map string keys to agent instances
-        self.agents = {
-            'qa': QAAgent(),
-            'symptom_checker': SymptomCheckerAgent(),
-            'medication_info': MedicationInfoAgent(),
-            'appointment_scheduler': AppointmentSchedulerAgent(),
-            'lab_results_interpreter': LabResultsInterpreterAgent(),
-            'health_education': HealthEducationAgent(),
-            'billing_insurance': BillingInsuranceAgent(),
-            'mental_health_support': MentalHealthSupportAgent(),
-            'technical_support': TechnicalSupportAgent(),
-            'prescription': PrescriptionAgent(),
-            'ehr_assistant': EHRAssistantAgent(),
-            'billing': BillingAgent(),
-            'video_summarizer': VideoSummarizerAgent(),  # Added here
-        }
 
-    def route_query(self, query: str, agent_key: str = None, context: str = "") -> str:
-        """
-        Route the query to a specific agent (by key).
-        If agent_key is omitted or unknown, fall back to a default agent or composite answers.
-        """
-        if agent_key in self.agents:
-            agent = self.agents[agent_key]
-            return agent.answer(query, context)
-        else:
-            # Simple fallback: just use QAAgent
-            return self.agents['qa'].answer(query, context)
+def classify_intent(user_query: str) -> str:
+    lower = user_query.lower()
+    if any(word in lower for word in ["pain", "symptom", "fever", "ache", "not feeling", "i have"]):
+        return "symptom"
+    elif any(word in lower for word in ["medication", "drug", "dose", "side effect"]):
+        return "medication"
+    elif any(word in lower for word in ["bill", "payment", "invoice", "insurance", "cost"]):
+        return "billing"
+    elif any(word in lower for word in ["prescription", "refill", "medicine", "script"]):
+        return "prescription"
+    else:
+        return "fallback"
+
+
+def supervisor_agent(user_query: str, context: str) -> str:
+    intent = classify_intent(user_query)
+    current_app.logger.info(f"Classified intent: {intent}")
+    agent = AGENTS.get(intent, AGENTS["fallback"])
+    return agent.answer(user_query, context)

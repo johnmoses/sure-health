@@ -1,198 +1,97 @@
 from app.llm.model import generate_response
+from typing import Optional
+from flask import current_app
+
+class BaseAgent:
+    def __init__(self, system_prompt: str, max_tokens: int = 512, temperature: float = 0.7, top_p: float = 0.9):
+        self.system_prompt = system_prompt.strip()
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.top_p = top_p
+
+    def build_messages(self, user_query: str, context: Optional[str] = None) -> list:
+        prompt_parts = []
+        if context:
+            prompt_parts.append(f"Context:\n{context.strip()}")
+        prompt_parts.append(f"User Query:\n{user_query.strip()}")
+
+        user_content = "\n\n".join(prompt_parts)
+
+        messages = [
+            {"role": "system", "content": self.system_prompt},
+            {"role": "user", "content": user_content},
+        ]
+        return messages
+
+    def answer(
+        self,
+        user_query: str,
+        context: Optional[str] = None,
+    ) -> str:
+        messages = self.build_messages(user_query, context)
+        try:
+            response = generate_response(
+                messages=messages,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+            )
+            return response
+        except Exception as e:
+            current_app.logger.error(f"LLM generation error in {self.__class__.__name__}: {e}", exc_info=True)
+            return "Sorry, I couldn't process your request at the moment."
 
 
-class QAAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt_text = (
-            f"Answer precisely with this context:\n{context}\nQuestion: {query}"
+class SymptomCheckerAgent(BaseAgent):
+    def __init__(self, max_tokens=512):
+        system_prompt = (
+            "You are a medical symptom checker assistant. Your goal is to help identify possible "
+            "causes or advice using patient's query and relevant medical context. Provide accurate, empathetic, and safe guidance."
         )
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt_text},
-        ]
-        return generate_response(messages, max_tokens=512)
+        super().__init__(system_prompt=system_prompt, max_tokens=max_tokens)
 
 
-class SymptomCheckerAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are a medical symptom checker. Using the context below, help identify possible causes or advice.\nContext:\n{context}\nPatient Query:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a medical symptom checker assistant.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class MedicationInfoAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are a medication expert assistant. Based on the context, provide accurate information about medications including usage, dosage, and side effects.\nContext:\n{context}\nQuestion:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You provide detailed, safe medication advice.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class AppointmentSchedulerAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are an appointment scheduler. Help the patient book, reschedule or cancel appointments based on the context.\nContext:\n{context}\nRequest:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You assist patients with scheduling their healthcare appointments.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class LabResultsInterpreterAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are a lab results assistant. Explain lab reports and test values to patients in an understandable way.\nContext:\n{context}\nQuestion:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "Explain lab results clearly and compassionately for patients.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class HealthEducationAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You provide health education on diet, exercise, lifestyle, and disease prevention using the context.\nContext:\n{context}\nUser Question:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You educate patients on healthy habits and disease prevention.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class BillingInsuranceAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are an assistant specialized in billing and insurance queries. Based on the context below respond accurately.\nContext:\n{context}\nQuestion:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You help with healthcare billing and insurance questions.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class MentalHealthSupportAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are a mental health support companion. Provide empathetic and helpful responses related to anxiety, depression, stress, or mood.\nContext:\n{context}\nUser Query:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You provide compassionate mental health support and resources.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class TechnicalSupportAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = f"You are the technical support representative for the healthcare app. Answer questions or solve problems about app functionality or errors.\nContext:\n{context}\nUser Query:\n{query}"
-        messages = [
-            {
-                "role": "system",
-                "content": "You assist users with technical issues and app support.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
-
-
-class PrescriptionAgent:
-    def answer(self, query: str, context: str) -> str:
-        prompt = (
-            "You are a medication expert assistant. "
-            "Using the context below, provide medication information or prescription suggestions.\n\n"
-            f"Context:\n{context}\nUser Query:\n{query}"
+class MedicationInfoAgent(BaseAgent):
+    def __init__(self, max_tokens=512):
+        system_prompt = (
+            "You are a medication expert assistant. Your role is to provide detailed, safe medication advice, "
+            "including information on usage, dosage, and side effects based on patient queries and context."
         )
-        messages = [
-            {
-                "role": "system",
-                "content": "You provide detailed, safe medication advice.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
+        super().__init__(system_prompt=system_prompt, max_tokens=max_tokens)
 
 
-class EHRAssistantAgent:
-    def answer(self, query: str, context: str = "") -> str:
-        prompt = (
-            "You are a medical assistant AI for EHR queries. "
-            "Use the following patient record context if provided.\n\n"
-            f"Context:\n{context}\nQuery:\n{query}"
+class BillingAgent(BaseAgent):
+    def __init__(self, max_tokens=512):
+        system_prompt = (
+            "You are a billing assistant. Help patients understand billing, insurance, payments, "
+            "and related inquiries in a clear, accurate, and empathetic manner."
         )
-        messages = [
-            {
-                "role": "system",
-                "content": "You provide concise, accurate EHR assistance.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
+        super().__init__(system_prompt=system_prompt, max_tokens=max_tokens)
 
 
-class BillingAgent:
-    def answer(self, query: str, context: str = "") -> str:
-        """
-        Respond to billing-related questions or perform billing workflow using LLM.
-        Context can include invoice summaries or payment info to ground answers.
-        """
-        prompt = (
-            "You are a billing assistant for healthcare invoices and payments.\n"
-            "Use the context below and answer the user's query accurately and clearly.\n\n"
-            f"Context:\n{context}\nQuestion:\n{query}"
+class PrescriptionAgent(BaseAgent):
+    def __init__(self, max_tokens=512):
+        system_prompt = (
+            "You are a prescription assistant. Provide safe, detailed, and accurate information about prescriptions, "
+            "including medication instructions, refills, and usage guidance."
         )
-        messages = [
-            {
-                "role": "system",
-                "content": "You provide concise billing information and assistance.",
-            },
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
+        super().__init__(system_prompt=system_prompt, max_tokens=max_tokens)
 
 
-class VideoAgent:
-    def answer(self, query: str, context: str = "") -> str:
-        prompt = (
-            "You are a telemedicine virtual assistant, helping explain session details and generate summaries.\n"
-            "Context:\n" + context + "\nQuestion:\n" + query
+class FallbackAgent(BaseAgent):
+    def __init__(self, max_tokens=512):
+        system_prompt = (
+            "You are a helpful healthcare assistant. Provide clear, accurate, and empathetic responses "
+            "to patient queries based on available context."
         )
-        messages = [
-            {"role": "system", "content": "Provide clear, concise medical session info."},
-            {"role": "user", "content": prompt}
-        ]
-        return generate_response(messages, max_tokens=512)
+        super().__init__(system_prompt=system_prompt, max_tokens=max_tokens)
 
-class VideoSummarizerAgent(VideoAgent):
-    """Specialized agent for generating concise summaries of telemedicine video sessions."""
-    def answer(self, query: str, context: str = "") -> str:
-        prompt = (
-            "You are a telemedicine virtual assistant specialized in creating concise summaries of video sessions.\n"
-            f"Use the following session context to answer the query:\n{context}\n\nQuestion:\n{query}"
-        )
-        messages = [
-            {"role": "system", "content": "Create clear, concise summaries for telemedicine sessions."},
-            {"role": "user", "content": prompt},
-        ]
-        return generate_response(messages, max_tokens=512)
+
+# Instantiate once for reuse
+AGENTS = {
+    "symptom": SymptomCheckerAgent(),
+    "medication": MedicationInfoAgent(),
+    "billing": BillingAgent(),
+    "prescription": PrescriptionAgent(),
+    "fallback": FallbackAgent(),
+}

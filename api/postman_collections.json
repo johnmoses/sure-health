@@ -1,545 +1,405 @@
 {
-    "info": {
-      "_postman_id": "ec0bedfc-f390-456b-9dbe-telemedicine-full",
-      "name": "Telemedicine Healthcare API (Full Example)",
-      "description": "Extensively detailed collection with environment & embedded tests",
-      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  "info": {
+    "name": "SureHealth API",
+    "_postman_id": "e7f4a618-1234-5678-9abc-9876543210ab",
+    "description": "Full CRUD example requests for SureHealth EHR system on port 5001 with JWT auth.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:5001/auth/register", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["auth", "register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:5001/auth/login", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/auth/logout", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["auth", "logout"] }
+          }
+        }
+      ]
     },
-    "variable": [
-      { "key": "base_url", "value": "http://localhost:5001", "description": "API base URL" },
-      { "key": "jwt_token", "value": "" }
-    ],
-    "item": [
-      {
-        "name": "Auth",
-        "item": [
-          {
-            "name": "Register User",
-            "request": {
-              "method": "POST",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass\",\n  \"role\": \"patient\"\n}" },
-              "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Response has 201 status', ()=>pm.response.to.have.status(201));",
-                  "pm.test('User registered message', ()=>pm.expect(pm.response.json().msg).to.include('registered'));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "Login User",
-            "request": {
-              "method": "POST",
-              "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass\"\n}" },
-              "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Login successful', ()=>pm.response.to.have.status(200));",
-                  "let json = pm.response.json();",
-                  "pm.test('msg in response', ()=>pm.expect(json.msg).to.include('Login successful'));",
-                  "// Save role (for chaining if needed)",
-                  "pm.environment.set('user_role', json.role||'');"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+    {
+      "name": "Chat",
+      "description": "Multi-party chat endpoints",
+      "item": [
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/chat/rooms", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms"] },
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Cardiology Consults\" }" }
           }
-        ]
-      },
-      {
-        "name": "Appointments",
-        "item": [
-          {
-            "name": "Create Appointment",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"patient_id\": 1,\n  \"clinician_id\": 2,\n  \"scheduled_time\": \"2025-07-22T10:30:00Z\",\n  \"status\": \"scheduled\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/appointments/", "host": ["{{base_url}}"], "path": ["appointments"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Appointment created', ()=>pm.response.to.have.status(201));",
-                  "let json=pm.response.json();",
-                  "pm.environment.set('appointment_id', json.id || 1);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "List Appointments",
-            "request": {
-              "method": "GET",
-              "header": [ { "key": "Authorization", "value": "Bearer {{jwt_token}}" } ],
-              "url": { "raw": "{{base_url}}/appointments/", "host": ["{{base_url}}"], "path": ["appointments"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Got appointment list', ()=>pm.response.to.have.status(200));",
-                  "pm.test('Is array', ()=>Array.isArray(pm.response.json()));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "List Rooms",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/chat/rooms", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms"] }
           }
-        ]
-      },
-      {
-        "name": "Chat",
-        "item": [
-          {
-            "name": "Create/Get Chat Room for Appointment",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/chat/rooms/{{appointment_id}}",
-                "host": ["{{base_url}}"],
-                "path": ["chat", "rooms", "{{appointment_id}}"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Response is 200', ()=>pm.response.to.have.status(200));",
-                  "let json = pm.response.json();",
-                  "pm.environment.set('chatroom_id', json.room_id);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "Send Message to Chat Room",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"room\": {{chatroom_id}},\n  \"sender_id\": 1,\n  \"content\": \"Hello doctor!\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/chat/send", "host": ["{{base_url}}"], "path": ["chat", "send"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Message sent', ()=>pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Join Room",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/chat/rooms/1/participants", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms", "1", "participants"] }
           }
-        ]
-      },
-      {
-        "name": "Video (Telemedicine)",
-        "item": [
-          {
-            "name": "Start Video Session",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": { "mode": "raw", "raw": "{\n  \"appointment_id\": {{appointment_id}}\n}" },
-              "url": { "raw": "{{base_url}}/video/start", "host": ["{{base_url}}"], "path": ["video", "start"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Video session started', ()=>pm.response.to.have.status(200));",
-                  "pm.environment.set('video_session_id', pm.response.json().id || 1);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "End Video Session",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": { "mode": "raw", "raw": "{\n  \"session_id\": {{video_session_id}}\n}" },
-              "url": { "raw": "{{base_url}}/video/end", "host": ["{{base_url}}"], "path": ["video", "end"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Session ended', ()=>pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/chat/rooms/1/messages", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms", "1", "messages"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello, when is the next appointment?\",\n  \"role\": \"patient\",\n  \"is_ai\": false\n}"
+            }
           }
-        ]
-      },
-      {
-        "name": "Prescriptions",
-        "item": [
-          {
-            "name": "Create Prescription",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"patient_id\": 1,\n  \"clinician_id\": 2,\n  \"medication\": \"Amoxicillin\",\n  \"dosage\": \"500mg\",\n  \"instructions\": \"Take twice daily after meals\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/prescriptions/", "host": ["{{base_url}}"], "path": ["prescriptions"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Prescription created', ()=>pm.response.to.have.status(201));",
-                  "pm.environment.set('prescription_id', pm.response.json().id || 1);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "List Patient Prescriptions",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/prescriptions/patient/1",
-                "host": ["{{base_url}}"],
-                "path": ["prescriptions", "patient", "1"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Get prescription list for patient', ()=>pm.response.to.have.status(200));",
-                  "pm.test('Is array', ()=>Array.isArray(pm.response.json()));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/chat/rooms/1/messages", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms", "1", "messages"] }
           }
-        ]
-      },
-      {
-        "name": "EHR",
-        "item": [
-          {
-            "name": "Add Medical Record",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"patient_id\": 1,\n  \"clinician_id\": 2,\n  \"description\": \"Annual checkup\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/ehr/records", "host": ["{{base_url}}"], "path": ["ehr", "records"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Medical record added', ()=>pm.response.to.have.status(201));",
-                  "pm.environment.set('medical_record_id', pm.response.json().id || 1);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "Get Patient Medical Records",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/ehr/records/1",
-                "host": ["{{base_url}}"],
-                "path": ["ehr", "records", "1"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Fetched medical records', ()=>pm.response.to.have.status(200));",
-                  "let records=pm.response.json();",
-                  "pm.test('response is array', ()=>Array.isArray(records));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "description": "Patients domain endpoints",
+      "item": [
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/patients", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"date_of_birth\": \"1985-03-16\",\n  \"gender\": \"male\"\n}"
+            }
           }
-        ]
-      },
-      {
-        "name": "Monitoring",
-        "item": [
-          {
-            "name": "Add Vital Sign",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"patient_id\": 1,\n  \"type\": \"heart_rate\",\n  \"value\": \"71\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/monitoring/vitals", "host": ["{{base_url}}"], "path": ["monitoring", "vitals"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Vital sign recorded', ()=>pm.response.to.have.status(201));",
-                  "pm.environment.set('vital_id', pm.response.json().id || 1);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "List Recent Vitals",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/monitoring/vitals/1",
-                "host": ["{{base_url}}"],
-                "path": ["monitoring", "vitals", "1"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Recent vitals fetched', ()=>pm.response.to.have.status(200));",
-                  "pm.test('Is array', ()=>Array.isArray(pm.response.json()));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Get Patient",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/patients/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1"] }
           }
-        ]
-      },
-      {
-        "name": "Security",
-        "item": [
-          {
-            "name": "Log Audit Action",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"user_id\": 1,\n  \"action\": \"Test log entry\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/security/log", "host": ["{{base_url}}"], "path": ["security", "log"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Action logged', ()=>pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "Get Audit Logs",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/security/logs/1",
-                "host": ["{{base_url}}"],
-                "path": ["security", "logs", "1"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Fetched audit logs', ()=>pm.response.to.have.status(200));",
-                  "pm.test('Array of logs', ()=>Array.isArray(pm.response.json()));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/patients/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"phone\": \"+1234567890\" }"
+            }
           }
-        ]
-      },
-      {
-        "name": "Billing",
-        "item": [
-          {
-            "name": "Create Invoice",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"patient_id\": 1,\n  \"amount\": 85.50,\n  \"due_date\": \"2025-08-10T00:00:00Z\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/billing/invoice", "host": ["{{base_url}}"], "path": ["billing", "invoice"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Invoice created', ()=>pm.response.to.have.status(201));",
-                  "pm.environment.set('invoice_id', pm.response.json().id || 1);"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "Record Payment",
-            "request": {
-              "method": "POST",
-              "header": [
-                { "key": "Content-Type", "value": "application/json" },
-                { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-              ],
-              "body": {
-                "mode": "raw",
-                "raw": "{\n  \"invoice_id\": {{invoice_id}},\n  \"amount\": 85.50,\n  \"method\": \"card\"\n}"
-              },
-              "url": { "raw": "{{base_url}}/billing/payment", "host": ["{{base_url}}"], "path": ["billing", "payment"] }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Payment recorded', ()=>pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "List Patient Invoices",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/billing/invoices/1",
-                "host": ["{{base_url}}"],
-                "path": ["billing", "invoices", "1"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Invoices fetched', ()=>pm.response.to.have.status(200));",
-                  "pm.test('Is array', ()=>Array.isArray(pm.response.json()));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Delete Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/patients/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1"] }
           }
-        ]
-      },
-      {
-        "name": "Dashboard",
-        "item": [
-          {
-            "name": "Get Clinician Dashboard",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/dashboard/clinician/2",
-                "host": ["{{base_url}}"],
-                "path": ["dashboard", "clinician", "2"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Clinician dashboard fetched', ()=>pm.response.to.have.status(200));",
-                  "let json=pm.response.json();",
-                  "pm.test('Has appointment count', ()=> json.hasOwnProperty('upcoming_appointments'));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
-          },
-          {
-            "name": "Get Patient Dashboard",
-            "request": {
-              "method": "GET",
-              "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-              "url": {
-                "raw": "{{base_url}}/dashboard/patient/1",
-                "host": ["{{base_url}}"],
-                "path": ["dashboard", "patient", "1"]
-              }
-            },
-            "event": [{
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Patient dashboard fetched', ()=>pm.response.to.have.status(200));",
-                  "let json=pm.response.json();",
-                  "pm.test('Recent vitals array', ()=>Array.isArray(json.recent_vitals));"
-                ],
-                "type": "text/javascript"
-              }
-            }]
+        },
+        {
+          "name": "Get Patient Summary (LLM)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/patients/1/summary", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1", "summary"] }
           }
-        ]
-      }
-    ]
-  }
-  
+        }
+      ]
+    },
+    {
+      "name": "Clinical",
+      "description": "Clinical domain endpoints",
+      "item": [
+        {
+          "name": "List Observations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/clinical/observations", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations"] }
+          }
+        },
+        {
+          "name": "Create Observation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/clinical/observations", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"code\": \"blood_pressure\",\n  \"value\": \"120/80\",\n  \"unit\": \"mmHg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Observation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] }
+          }
+        },
+        {
+          "name": "Update Observation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"value\": \"130/85\" }"
+            }
+          }
+        },
+        {
+          "name": "Delete Observation",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] }
+          }
+        },
+        {
+          "name": "Summarize Clinical Notes (LLM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/clinical/notes/summary", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "notes", "summary"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"notes\": \"The patient shows improvement in blood pressure after medication adjustment.\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Medications",
+      "description": "Medications blueprint CRUD and counseling",
+      "item": [
+        {
+          "name": "Create Prescription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/medications/prescriptions", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["medications", "prescriptions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"medication_name\": \"Atorvastatin\",\n  \"dosage\": \"10 mg\",\n  \"frequency\": \"once daily\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Prescriptions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/medications/prescriptions", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["medications", "prescriptions"] }
+          }
+        },
+        {
+          "name": "Medication Counseling (LLM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/medications/counseling", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["medications", "counseling"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"medication\": \"Atorvastatin\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "description": "Billing invoices and payments CRUD + LLM explanation",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/billing/invoices", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"amount\": 250.00,\n  \"status\": \"pending\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Invoice",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1"] }
+          }
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"paid\" }"
+            }
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices"] }
+          }
+        },
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/billing/payments", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "payments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_id\": 1,\n  \"amount\": 100.00,\n  \"method\": \"credit card\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Payments for Invoice",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1/payments", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1", "payments"] }
+          }
+        },
+        {
+          "name": "Explain Invoice (LLM)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1/explain", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1", "explain"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Dashboard metrics and LLM natural language queries",
+      "item": [
+        {
+          "name": "Get Metrics Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/dashboard/metrics/summary", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["dashboard", "metrics", "summary"] }
+          }
+        },
+        {
+          "name": "Ask LLM About Metrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/dashboard/metrics/ask-llm", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["dashboard", "metrics", "ask-llm"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"How many new patients were registered this month?\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "jwt_token",
+      "value": ""
+    }
+  ]
+}

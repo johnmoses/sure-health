@@ -1,27 +1,38 @@
-from app.extensions import ma
-from app.auth.models import User
-from .models import ChatRoom, ChatMessage
-from marshmallow import fields, validate
+from marshmallow import Schema, fields, validate
 
-class ChatMessageSchema(ma.SQLAlchemyAutoSchema):
-    timestamp = fields.DateTime(format='iso')
-    role = fields.String(validate=validate.OneOf(['clinician', 'patient', 'bot']), required=True)
-    sender_username = fields.Method('get_sender_username', dump_only=True)
+class ChatRoomSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True)
+    created_at = fields.DateTime(dump_only=True)
 
-    def get_sender_username(self, obj):
-        if not obj.sender_id:
-            return None
-        user = User.query.get(obj.sender_id)
-        return user.username if user else None
+class ChatMessageSchema(Schema):
+    id = fields.Int(dump_only=True)
+    room_id = fields.Int(required=True)
+    sender_id = fields.Int(required=True)
+    content = fields.Str(required=True)
+    timestamp = fields.DateTime(dump_only=True)
 
-    class Meta:
-        model = ChatMessage
-        load_instance = True
-        include_fk = True
+    role = fields.Str(
+        validate=validate.OneOf(['patient', 'clinician', 'bot', 'other']),
+        load_default='other'  # defaults when the field is missing
+    )
+    is_ai = fields.Bool(missing=False)
+    message_type = fields.Str(
+        validate=validate.OneOf(['text', 'image', 'system']),
+        missing='text'
+    )
+    status = fields.Str(missing='sent')
 
-class ChatRoomSchema(ma.SQLAlchemyAutoSchema):
-    messages = fields.Nested(ChatMessageSchema, many=True, dump_only=True)
+class ChatParticipantSchema(Schema):
+    id = fields.Int(dump_only=True)
+    room_id = fields.Int(required=True)
+    user_id = fields.Int(required=True)
+    joined_at = fields.DateTime(dump_only=True)
 
-    class Meta:
-        model = ChatRoom
-        load_instance = True
+class TelemedSessionSchema(Schema):
+    id = fields.Int(dump_only=True)
+    room_id = fields.Int(required=True)
+    session_url = fields.Str(required=True)
+    start_time = fields.DateTime(dump_only=True)
+    end_time = fields.DateTime(allow_none=True)
+    status = fields.Str()

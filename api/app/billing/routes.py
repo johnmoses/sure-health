@@ -1,133 +1,125 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.extensions import db
+from flask_jwt_extended import jwt_required
 from app.billing.models import Invoice, Payment
 from app.billing.schemas import InvoiceSchema, PaymentSchema
-from app.billing.services import BillingService
+from app.extensions import db
+from app.llm.clients import generate_response
 
-billing_bp = Blueprint('billing_bp', __name__)
+
+billing_bp = Blueprint('billing', __name__)
 
 invoice_schema = InvoiceSchema()
 invoices_schema = InvoiceSchema(many=True)
-
 payment_schema = PaymentSchema()
 payments_schema = PaymentSchema(many=True)
-billing_service = BillingService()
-# Invoice CRUD
 
+# Create Invoice
 @billing_bp.route('/invoices', methods=['POST'])
 @jwt_required()
 def create_invoice():
     data = request.get_json()
     errors = invoice_schema.validate(data)
     if errors:
-        return jsonify({"errors": errors}), 400
-
-    invoice = invoice_schema.load(data, session=db.session)
+        return jsonify(errors), 400
+    invoice = Invoice(**data)
     db.session.add(invoice)
     db.session.commit()
-    return invoice_schema.jsonify(invoice), 201
+    return jsonify(invoice_schema.dump(invoice)), 201
 
-@billing_bp.route('/invoices', methods=['GET'])
-@jwt_required()
-def get_invoices():
-    user_id = get_jwt_identity()
-    # For simplicity, return all invoices for this patient (expand as needed)
-    invoices = Invoice.query.filter_by(patient_id=user_id).all()
-    return invoices_schema.jsonify(invoices)
-
+# Retrieve Invoice
 @billing_bp.route('/invoices/<int:invoice_id>', methods=['GET'])
 @jwt_required()
 def get_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    user_id = get_jwt_identity()
-    if invoice.patient_id != user_id:
-        return jsonify({"error": "Access forbidden"}), 403
-    return invoice_schema.jsonify(invoice)
+    return jsonify(invoice_schema.dump(invoice))
 
+# List Invoices
+@billing_bp.route('/invoices', methods=['GET'])
+@jwt_required()
+def list_invoices():
+    patient_id = request.args.get('patient_id', type=int)
+    query = Invoice.query
+    if patient_id:
+        query = query.filter_by(patient_id=patient_id)
+    invoices = query.all()
+    return jsonify(invoices_schema.dump(invoices))
+
+# Update Invoice
 @billing_bp.route('/invoices/<int:invoice_id>', methods=['PUT'])
 @jwt_required()
 def update_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    user_id = get_jwt_identity()
-    if invoice.patient_id != user_id:
-        return jsonify({"error": "Access forbidden"}), 403
-
     data = request.get_json()
     errors = invoice_schema.validate(data, partial=True)
     if errors:
-        return jsonify({"errors": errors}), 400
-
-    for key, value in data.items():
-        setattr(invoice, key, value)
-
+        return jsonify(errors), 400
+    for k, v in data.items():
+        setattr(invoice, k, v)
     db.session.commit()
-    return invoice_schema.jsonify(invoice)
+    return jsonify(invoice_schema.dump(invoice))
 
-
+# Delete Invoice
 @billing_bp.route('/invoices/<int:invoice_id>', methods=['DELETE'])
 @jwt_required()
 def delete_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    user_id = get_jwt_identity()
-    if invoice.patient_id != user_id:
-        return jsonify({"error": "Access forbidden"}), 403
     db.session.delete(invoice)
     db.session.commit()
-    return jsonify({"message": f"Invoice {invoice_id} deleted."}), 200
+    return '', 204
 
-
-# Payment CRUD
-
-@billing_bp.route('/invoices/<int:invoice_id>/payments', methods=['POST'])
+# Create Payment
+@billing_bp.route('/payments', methods=['POST'])
 @jwt_required()
-def create_payment(invoice_id):
-    invoice = Invoice.query.get_or_404(invoice_id)
-    user_id = get_jwt_identity()
-    if invoice.patient_id != user_id:
-        return jsonify({"error": "Access forbidden"}), 403
-
+def create_payment():
     data = request.get_json()
-    data['invoice_id'] = invoice_id
-
     errors = payment_schema.validate(data)
     if errors:
-        return jsonify({"errors": errors}), 400
-
-    payment = payment_schema.load(data, session=db.session)
+        return jsonify(errors), 400
+    payment = Payment(**data)
     db.session.add(payment)
-
-    # Update invoice status if paid in full
-    total_paid = sum(p.amount for p in invoice.payments) + payment.amount
-    if total_paid >= invoice.amount:
-        invoice.status = 'paid'
-    else:
-        invoice.status = 'pending'
-
     db.session.commit()
-    return payment_schema.jsonify(payment), 201
+    return jsonify(payment_schema.dump(payment)), 201
 
-
+# List Payments for Invoice
 @billing_bp.route('/invoices/<int:invoice_id>/payments', methods=['GET'])
 @jwt_required()
 def get_payments(invoice_id):
-    invoice = Invoice.query.get_or_404(invoice_id)
-    user_id = get_jwt_identity()
-    if invoice.patient_id != user_id:
-        return jsonify({"error": "Access forbidden"}), 403
     payments = Payment.query.filter_by(invoice_id=invoice_id).all()
-    return payments_schema.jsonify(payments)
+    return jsonify(payments_schema.dump(payments))
 
-@billing_bp.route('/query', methods=['POST'])
+@billing_bp.route('/invoices/<int:invoice_id>/explain', methods=['GET'])
 @jwt_required()
-def billing_query():
-    data = request.get_json()
-    query = data.get('query', '').strip()
-    invoice_id = data.get('invoice_id')  # optional to provide invoice context
+def explain_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    total_paid = invoice.paid_amount
+    unpaid = invoice.amount - total_paid
+    bill_info = (
+        f"Invoice ID: {invoice.id}\n"
+        f"Bill Date: {invoice.created_at.strftime('%Y-%m-%d') if invoice.created_at else 'N/A'}\n"
+        f"Amount: ${invoice.amount:.2f}\n"
+        f"Paid: ${total_paid:.2f}\n"
+        f"Status: {invoice.status}\n"
+        f"Due Date: {invoice.due_date.strftime('%Y-%m-%d') if invoice.due_date else 'N/A'}\n"
+    )
+    if invoice.payments:
+        bill_info += "Payments:\n"
+        for p in invoice.payments:
+            bill_info += f"- {p.payment_date.strftime('%Y-%m-%d') if p.payment_date else 'N/A'}: ${p.amount:.2f} [{p.method or 'N/A'}]\n"
 
-    if not query:
-        return jsonify({"error": "Query text required."}), 400
+    prompt = [
+        {"role": "system", "content": "Explain this medical invoice in clear, friendly language for a patient, noting pay history and any actions needed."},
+        {"role": "user", "content": bill_info}
+    ]
 
-    result = billing_service.answer_billing_query(query, invoice_id)
-    status_code = 200 if result.get("success") else 500
-    return jsonify(result), status_code
+    explanation = generate_response(prompt)  # Could be str or generator
+
+    # If streaming (generator), consume it fully into a string
+    if hasattr(explanation, '__iter__') and not isinstance(explanation, str):
+        explanation_text = ''.join(explanation)
+    else:
+        explanation_text = explanation
+
+    return jsonify({
+        "invoice_id": invoice.id,
+        "explanation": explanation_text
+    })

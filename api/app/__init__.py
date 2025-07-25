@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_cors import CORS
-import logging # Import logging to use app.logger directly
 from app.extensions import (
     db,
     migrate,
@@ -27,31 +26,23 @@ def create_app():
     ma.init_app(app)
 
     # --- Register Blueprints ---
-    # Using relative imports if possible, or direct if that's your project style
     from app.auth.routes import auth_bp
-    from app.appointments.routes import appointments_bp
     from app.chat.routes import chat_bp
-    from app.video.routes import video_bp
-    from app.prescriptions.routes import prescriptions_bp
-    from app.ehr.routes import ehr_bp
-    from app.monitoring.routes import monitoring_bp
-    from app.security.routes import security_bp
+    from app.patients.routes import patients_bp
+    from app.clinical.routes import clinical_bp
+    from app.medications.routes import medications_bp
     from app.billing.routes import billing_bp
     from app.dashboard.routes import dashboard_bp
-    # Add any new blueprints related to AI/RAG here, e.g.:
-    # from app.ai_assistant.routes import ai_assistant_bp 
+    from app.llm.routes import llm_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(appointments_bp, url_prefix="/appointments")
     app.register_blueprint(chat_bp, url_prefix="/chat")
-    app.register_blueprint(video_bp, url_prefix="/video")
-    app.register_blueprint(prescriptions_bp, url_prefix="/prescriptions")
-    app.register_blueprint(ehr_bp, url_prefix="/ehr")
-    app.register_blueprint(monitoring_bp, url_prefix="/monitoring")
-    app.register_blueprint(security_bp, url_prefix="/security")
+    app.register_blueprint(patients_bp, url_prefix="/patients")
+    app.register_blueprint(clinical_bp, url_prefix="/clinical")
+    app.register_blueprint(medications_bp, url_prefix="/medications")
     app.register_blueprint(billing_bp, url_prefix="/billing")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
-    # app.register_blueprint(ai_assistant_bp, url_prefix="/ai") # Example for new AI module
+    app.register_blueprint(llm_bp, url_prefix="/llm")
 
     # --- JWT Token Revocation (Blacklist) ---
     @jwt.token_in_blocklist_loader
@@ -70,7 +61,7 @@ def create_app():
         if not bot:
             try:
                 # Assuming your User model has username, role, and password
-                bot = User(username="bot", role="bot") 
+                bot = User(username="bot", email="bot@bot", role="bot") 
                 bot.set_password("bot_password_here") # Set a secure default password
                 db.session.add(bot)
                 db.session.commit()
@@ -79,7 +70,8 @@ def create_app():
                 app.logger.error(f"Failed to create 'bot' user: {e}", exc_info=True)
 
 
-        # Initialize Milvus Client and Collection
+        # Initialize Milvus Client and Collection 
+        # help generate postman collections for the routes including auth, chat, patients, clinical, medications, billing, dashboard
         try:
             milvus_db_path = app.config.get("MILVUS_DB_PATH")
             milvus_collection = app.config.get("MILVUS_COLLECTION")
