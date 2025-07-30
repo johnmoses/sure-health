@@ -1,62 +1,123 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { fetchDashboardSummary } from '@/xlib/api';
-import { DashboardSummary } from '@/xlib/types';
+import { useEffect, useState } from 'react';
+import { dashboardApi } from '../api';
+import { Users, Calendar, DollarSign, Activity } from 'lucide-react';
+
+interface DashboardStats {
+  totalPatients: number;
+  todayAppointments: number;
+  pendingBills: number;
+  activeUsers: number;
+}
 
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || '' : '';
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
-    fetchDashboardSummary(token)
-      .then(setSummary)
-      .catch((e: Error) => setError(e.message));
-  }, [token]);
+    const fetchDashboardData = async () => {
+      try {
+        const response = await dashboardApi.getStats();
+        setStats(response.data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (error) {
-    return <p className="text-red-600 p-4">{error}</p>;
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
   }
 
-  if (!summary) {
-    return <p className="p-4">Loading dashboard...</p>;
-  }
+  const statCards = [
+    {
+      title: 'Total Patients',
+      value: stats?.totalPatients || 0,
+      icon: Users,
+      color: 'bg-blue-500',
+    },
+    {
+      title: 'Today\'s Appointments',
+      value: stats?.todayAppointments || 0,
+      icon: Calendar,
+      color: 'bg-green-500',
+    },
+    {
+      title: 'Pending Bills',
+      value: stats?.pendingBills || 0,
+      icon: DollarSign,
+      color: 'bg-yellow-500',
+    },
+    {
+      title: 'Active Users',
+      value: stats?.activeUsers || 0,
+      icon: Activity,
+      color: 'bg-purple-500',
+    },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Dashboard Summary</h1>
-      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Total Users</h2>
-          <p className="text-3xl">{summary.total_users}</p>
-        </li>
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Active Appointments</h2>
-          <p className="text-3xl">{summary.active_appointments}</p>
-        </li>
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Total Billings</h2>
-          <p className="text-3xl">{summary.total_billings}</p>
-        </li>
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Active Chat Sessions</h2>
-          <p className="text-3xl">{summary.active_chat_sessions}</p>
-        </li>
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Prescriptions</h2>
-          <p className="text-3xl">{summary.prescriptions_count}</p>
-        </li>
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Video Sessions</h2>
-          <p className="text-3xl">{summary.video_sessions_count}</p>
-        </li>
-        <li className="bg-gray-100 p-4 rounded shadow">
-          <h2 className="text-xl font-semibold">Vital Signs Recorded</h2>
-          <p className="text-3xl">{summary.vital_signs_count}</p>
-        </li>
-      </ul>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.title} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className={`${card.color} rounded-md p-3`}>
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h2>
+          <div className="space-y-3">
+            <div className="flex items-center text-sm">
+              <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+              <span>New patient registered</span>
+            </div>
+            <div className="flex items-center text-sm">
+              <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
+              <span>Appointment scheduled</span>
+            </div>
+            <div className="flex items-center text-sm">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+              <span>Bill payment received</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+          <div className="space-y-2">
+            <button className="w-full text-left px-4 py-2 text-sm bg-blue-50 hover:bg-blue-100 rounded-md">
+              Add New Patient
+            </button>
+            <button className="w-full text-left px-4 py-2 text-sm bg-green-50 hover:bg-green-100 rounded-md">
+              Schedule Appointment
+            </button>
+            <button className="w-full text-left px-4 py-2 text-sm bg-purple-50 hover:bg-purple-100 rounded-md">
+              Create Bill
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

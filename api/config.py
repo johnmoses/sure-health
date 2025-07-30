@@ -7,8 +7,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "jwt-secret")
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=360)  # 6 hours
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)     # 30 days
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)  # 1 hour
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)     # 7 days
+    JWT_TOKEN_LOCATION = ['headers']
 
     # Remove these if your jwt package version does not use them:
     # JWT_BLACKLIST_ENABLED = True

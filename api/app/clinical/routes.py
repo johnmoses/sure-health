@@ -5,6 +5,9 @@ from app.clinical.schemas import ObservationSchema, EncounterSchema, Appointment
 from app.extensions import db
 from app.common.decorators import jwt_required_with_roles
 from app.llm.clients import generate_response
+import uuid
+from datetime import datetime
+
 
 
 clinical_bp = Blueprint('clinical', __name__)
@@ -133,7 +136,7 @@ def delete_encounter(fhir_id):
     db.session.commit()
     return '', 204
 
-# ---- Appointment Endpoints ----
+
 @clinical_bp.route('/appointments', methods=['POST'])
 @jwt_required()
 @jwt_required_with_roles(roles=['clinician', 'admin', 'patient'])
@@ -142,11 +145,38 @@ def create_appointment():
     errors = appointment_schema.validate(data)
     if errors:
         return jsonify(errors), 400
-    appt = Appointment(**data)
+
+    # Generate fhir_id if missing
+    if 'fhir_id' not in data or not data['fhir_id']:
+        data['fhir_id'] = str(uuid.uuid4())
+
+    # Parse appointment_datetime string to datetime object
+    if 'appointment_datetime' in data and isinstance(data['appointment_datetime'], str):
+        try:
+            data['appointment_datetime'] = datetime.fromisoformat(data['appointment_datetime'])
+        except ValueError:
+            return jsonify({"appointment_datetime": ["Invalid datetime format. Expected ISO format."]}), 400
+
+    # Set created_at and updated_at if not provided
+    if 'created_at' not in data:
+        data['created_at'] = datetime.utcnow()
+    if 'updated_at' not in data:
+        data['updated_at'] = datetime.utcnow()
+
+    # Optionally, use schema.load() to deserialize (if your schema supports it)
+    try:
+        appt = appointment_schema.load(data)
+    except Exception as e:
+        # Catch deserialization errors here
+        return jsonify({"error": str(e)}), 400
+
     db.session.add(appt)
     db.session.commit()
-    appointmend_data = appointment_schema.dump(appt)
-    return jsonify(appointmend_data), 201
+
+    appointment_data = appointment_schema.dump(appt)
+    return jsonify(appointment_data), 201
+
+
 
 @clinical_bp.route('/appointments/<string:fhir_id>', methods=['GET'])
 @jwt_required()

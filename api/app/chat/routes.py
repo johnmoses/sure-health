@@ -132,10 +132,12 @@ def start_telemed(room_id):
     if not room:
         return jsonify({'msg': 'Room not found.'}), 404
     data = request.get_json() or {}
-    session_url = data.get(
-        'session_url',
-        f"https://meet.jit.si/{room_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-    )
+    
+    # Ensure session_url is never None
+    session_url = data.get('session_url')
+    if not session_url:
+        session_url = f"https://meet.jit.si/{room_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    
     telemed = TelemedSession(room_id=room.id, session_url=session_url, status='active')
     db.session.add(telemed)
     db.session.commit()
@@ -227,7 +229,7 @@ def post_message_and_get_bot_reply(room_id):
         bot_reply_text = ''.join(chunks).strip()
     except Exception as e:
         current_app.logger.error(f"LLM generation failed: {e}", exc_info=True)
-    bot_reply_text = "Sorry, I couldn't process your request at the moment."
+        bot_reply_text = "Sorry, I couldn't process your request at the moment."
 
     if not bot_reply_text:
         bot_reply_text = "I'm here to help you with your healthcare questions."
