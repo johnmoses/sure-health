@@ -115,7 +115,7 @@ def update_profile():
     # Only allow update for certain fields here
     allowed_fields = {"username", "email", "role"}
     for field in allowed_fields:
-        if field in allowed_fields:
+        if field in data:
             setattr(user, field, data[field])
 
     db.session.commit()

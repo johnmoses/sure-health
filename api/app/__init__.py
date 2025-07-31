@@ -1,5 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from app.extensions import (
     db,
     migrate,
@@ -9,9 +11,11 @@ from app.extensions import (
     ma,
     init_milvus_client, 
     init_embed_model,
-    init_llama_model # Import the Llama initialization function
+    init_llama_model
 )
-from app.auth.models import User # Make sure User is imported correctly
+from app.auth.models import User
+from app.common.hipaa_middleware import HIPAAMiddleware
+from app.common.error_handlers import register_error_handlers
 
 def create_app():
     app = Flask(__name__)
@@ -24,6 +28,20 @@ def create_app():
     jwt.init_app(app)
     socketio.init_app(app)
     ma.init_app(app)
+    
+    # Initialize HIPAA compliance middleware
+    HIPAAMiddleware(app)
+    
+    # Initialize rate limiting for HIPAA compliance
+    limiter = Limiter(
+        app,
+        key_func=get_remote_address,
+        default_limits=["100 per hour", "20 per minute"],
+        storage_uri=app.config.get("RATELIMIT_STORAGE_URL", "memory://")
+    )
+    
+    # Register error handlers
+    register_error_handlers(app)
 
     # --- Register Blueprints ---
     from app.auth.routes import auth_bp
@@ -34,7 +52,9 @@ def create_app():
     from app.billing.routes import billing_bp
     from app.dashboard.routes import dashboard_bp
     from app.llm.routes import llm_bp
+    from app.common.health import health_bp
 
+    app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(chat_bp, url_prefix="/chat")
     app.register_blueprint(patients_bp, url_prefix="/patients")

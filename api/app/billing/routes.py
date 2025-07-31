@@ -91,35 +91,33 @@ def get_payments(invoice_id):
 @jwt_required()
 def explain_invoice(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    total_paid = invoice.paid_amount
-    unpaid = invoice.amount - total_paid
-    bill_info = (
-        f"Invoice ID: {invoice.id}\n"
-        f"Bill Date: {invoice.created_at.strftime('%Y-%m-%d') if invoice.created_at else 'N/A'}\n"
-        f"Amount: ${invoice.amount:.2f}\n"
-        f"Paid: ${total_paid:.2f}\n"
-        f"Status: {invoice.status}\n"
-        f"Due Date: {invoice.due_date.strftime('%Y-%m-%d') if invoice.due_date else 'N/A'}\n"
-    )
-    if invoice.payments:
-        bill_info += "Payments:\n"
-        for p in invoice.payments:
-            bill_info += f"- {p.payment_date.strftime('%Y-%m-%d') if p.payment_date else 'N/A'}: ${p.amount:.2f} [{p.method or 'N/A'}]\n"
+    
+    try:
+        # Get invoice details
+        bill_info = (
+            f"Invoice ID: {invoice.id}\n"
+            f"Amount: ${invoice.amount:.2f}\n"
+            f"Status: {invoice.status}\n"
+            f"Description: {getattr(invoice, 'description', 'Medical services')}\n"
+        )
+        
+        prompt = [
+            {"role": "system", "content": "Explain this medical invoice in clear, friendly language for a patient."},
+            {"role": "user", "content": bill_info}
+        ]
 
-    prompt = [
-        {"role": "system", "content": "Explain this medical invoice in clear, friendly language for a patient, noting pay history and any actions needed."},
-        {"role": "user", "content": bill_info}
-    ]
+        explanation_gen = generate_response(prompt)
+        explanation_text = ''.join(explanation_gen) if explanation_gen else ""
+        
+        if not explanation_text.strip():
+            explanation_text = f"This is invoice #{invoice.id} for ${invoice.amount:.2f} with status: {invoice.status}. Please contact billing for more details."
 
-    explanation = generate_response(prompt)  # Could be str or generator
-
-    # If streaming (generator), consume it fully into a string
-    if hasattr(explanation, '__iter__') and not isinstance(explanation, str):
-        explanation_text = ''.join(explanation)
-    else:
-        explanation_text = explanation
-
-    return jsonify({
-        "invoice_id": invoice.id,
-        "explanation": explanation_text
-    })
+        return jsonify({
+            "invoice_id": invoice.id,
+            "explanation": explanation_text
+        })
+    except Exception as e:
+        return jsonify({
+            "invoice_id": invoice.id,
+            "explanation": f"This is invoice #{invoice.id} for ${invoice.amount:.2f}. Please contact billing for assistance."
+        })

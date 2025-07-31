@@ -2,23 +2,94 @@
   "info": {
     "name": "SureHealth API",
     "_postman_id": "e7f4a618-1234-5678-9abc-9876543210ab",
-    "description": "Full CRUD example requests for SureHealth EHR system on port 5001 with JWT auth.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "description": "Complete SureHealth EHR API with HIPAA compliance, AI/LLM integration, and comprehensive healthcare endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
   },
   "item": [
+    {
+      "name": "Health & System",
+      "description": "Health checks and system monitoring endpoints",
+      "item": [
+        {
+          "name": "Basic Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Detailed Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/health/detailed",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["health", "detailed"]
+            }
+          }
+        },
+        {
+          "name": "System Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/metrics",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["metrics"]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "Auth",
       "description": "Authentication endpoints",
       "item": [
         {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "users"]
+            }
+          }
+        },
+        {
           "name": "Register User",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": { "raw": "http://localhost:5001/auth/register", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["auth", "register"] },
+            "url": {
+              "raw": "http://localhost:5001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "register"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"TestPass123!\",\n  \"role\": \"patient\"\n}"
             }
           }
         },
@@ -35,6 +106,81 @@
           }
         },
         {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{refresh_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/refresh",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/profile",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/profile",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "profile"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newemail@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/change-password",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "change-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"old_password\": \"TestPass123!\",\n  \"new_password\": \"NewPass456!\"\n}"
+            }
+          }
+        },
+        {
           "name": "Logout User",
           "request": {
             "method": "POST",
@@ -42,7 +188,13 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
             ],
-            "url": { "raw": "http://localhost:5001/auth/logout", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["auth", "logout"] }
+            "url": {
+              "raw": "http://localhost:5001/auth/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "logout"]
+            }
           }
         }
       ]
@@ -99,7 +251,71 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-            "url": { "raw": "http://localhost:5001/chat/rooms/1/messages", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms", "1", "messages"] }
+            "url": {
+              "raw": "http://localhost:5001/chat/rooms/1/messages",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "rooms", "1", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Post Message with AI Bot Reply",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/chat/rooms/1/post_message",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "rooms", "1", "post_message"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"I have been experiencing chest pain. What should I do?\",\n  \"role\": \"patient\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Start Telemedicine Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/chat/rooms/1/telemed/start",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "rooms", "1", "telemed", "start"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_url\": \"https://meet.jit.si/surehealth-room-1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "End Telemedicine Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/chat/telemed/1/end",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "telemed", "1", "end"]
+            }
           }
         }
       ]
@@ -119,7 +335,7 @@
             "url": { "raw": "http://localhost:5001/patients", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"date_of_birth\": \"1985-03-16\",\n  \"gender\": \"male\"\n}"
+              "raw": "{\n  \"user_id\": 1,\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"date_of_birth\": \"1985-03-16\",\n  \"gender\": \"male\",\n  \"phone\": \"5551234567\",\n  \"email\": \"john.doe@example.com\",\n  \"medical_record_number\": \"MRN12345\"\n}"
             }
           }
         },
@@ -155,11 +371,31 @@
           }
         },
         {
+          "name": "List All Patients",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "http://localhost:5001/patients",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["patients"]
+            }
+          }
+        },
+        {
           "name": "Get Patient Summary (LLM)",
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
-            "url": { "raw": "http://localhost:5001/patients/1/summary", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1", "summary"] }
+            "url": {
+              "raw": "http://localhost:5001/patients/1/summary",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["patients", "1", "summary"]
+            }
           }
         }
       ]
@@ -187,7 +423,7 @@
             "url": { "raw": "http://localhost:5001/clinical/observations", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"patient_id\": 1,\n  \"code\": \"blood_pressure\",\n  \"value\": \"120/80\",\n  \"unit\": \"mmHg\"\n}"
+              "raw": "{\n  \"patient_id\": 1,\n  \"code\": \"blood_pressure\",\n  \"value\": \"120/80\",\n  \"unit\": \"mmHg\",\n  \"effective_datetime\": \"2024-01-15T10:30:00\",\n  \"status\": \"final\"\n}"
             }
           }
         },
@@ -210,7 +446,7 @@
             "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] },
             "body": {
               "mode": "raw",
-              "raw": "{ \"value\": \"130/85\" }"
+              "raw": "{\n  \"value\": \"130/85\",\n  \"status\": \"amended\"\n}"
             }
           }
         },
@@ -367,6 +603,49 @@
       ]
     },
     {
+      "name": "LLM & AI",
+      "description": "Direct LLM and AI model interactions",
+      "item": [
+        {
+          "name": "Generate Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/llm/generate",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["llm", "generate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a helpful medical assistant.\"},\n    {\"role\": \"user\", \"content\": \"What are the symptoms of hypertension?\"}\n  ],\n  \"max_tokens\": 512,\n  \"temperature\": 0.7\n}"
+            }
+          }
+        },
+        {
+          "name": "Health Check LLM",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/llm/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["llm", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Dashboard",
       "description": "Dashboard metrics and LLM natural language queries",
       "item": [
@@ -398,8 +677,95 @@
   ],
   "variable": [
     {
+      "key": "base_url",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
       "key": "jwt_token",
-      "value": ""
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patient_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract JWT token from login response",
+          "if (pm.info.requestName === 'Login User') {",
+          "    pm.sendRequest({",
+          "        url: pm.variables.get('base_url') + '/auth/login',",
+          "        method: 'POST',",
+          "        header: {'Content-Type': 'application/json'},",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                username: 'testuser',",
+          "                password: 'TestPass123!'",
+          "            })",
+          "        }",
+          "    }, function (err, res) {",
+          "        if (!err && res.json().access_token) {",
+          "            pm.collectionVariables.set('jwt_token', res.json().access_token);",
+          "            pm.collectionVariables.set('refresh_token', res.json().refresh_token);",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract tokens from login response",
+          "if (pm.info.requestName === 'Login User' && pm.response.code === 200) {",
+          "    const responseJson = pm.response.json();",
+          "    if (responseJson.access_token) {",
+          "        pm.collectionVariables.set('jwt_token', responseJson.access_token);",
+          "    }",
+          "    if (responseJson.refresh_token) {",
+          "        pm.collectionVariables.set('refresh_token', responseJson.refresh_token);",
+          "    }",
+          "    if (responseJson.user && responseJson.user.id) {",
+          "        pm.collectionVariables.set('user_id', responseJson.user.id);",
+          "    }",
+          "}",
+          "",
+          "// Test response status",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});"
+        ]
+      }
     }
   ]
 }

@@ -47,3 +47,58 @@ def chat_completion():
             stream=False,
         )
         return jsonify({"response": response})
+
+@llm_bp.route('/health', methods=['GET'])
+@jwt_required()
+def llm_health():
+    try:
+        from flask import current_app
+        import os
+        
+        # Check if model path exists
+        model_path = current_app.config.get("LLAMA_MODEL_PATH")
+        if not model_path:
+            return jsonify({
+                "status": "unhealthy",
+                "llm_available": False,
+                "error": "LLAMA_MODEL_PATH not configured"
+            }), 500
+        
+        if not os.path.exists(model_path):
+            return jsonify({
+                "status": "unhealthy",
+                "llm_available": False,
+                "error": f"Model file not found: {model_path}"
+            }), 500
+        
+        from app.llm.clients import generate_response
+        
+        # Test LLM with simple message
+        test_messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Say 'OK' if you are working."}
+        ]
+        
+        response_text = generate_response(test_messages)
+        
+        if response_text and response_text.strip():
+            return jsonify({
+                "status": "healthy",
+                "llm_available": True,
+                "test_response": response_text[:50] + "..." if len(response_text) > 50 else response_text
+            })
+        else:
+            return jsonify({
+                "status": "degraded",
+                "llm_available": False,
+                "message": "LLM not responding"
+            })
+            
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy",
+            "llm_available": False,
+            "error": str(e)
+        }), 500
+
+

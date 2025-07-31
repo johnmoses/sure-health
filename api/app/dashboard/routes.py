@@ -48,6 +48,17 @@ def llm_query_by_model():
     data = get_llm_queries_by_model(hours)
     return jsonify(data)
 
+@dashboard_bp.route('/metrics/summary', methods=['GET'])
+@jwt_required_with_roles(roles=['admin', 'dashboard_viewer'])
+def metrics_summary():
+    hours = request.args.get('hours', 24, type=int)
+    return jsonify({
+        "total_users": get_total_users(),
+        "total_llm_queries": get_llm_query_counts(hours),
+        "api_calls": get_api_call_counts_per_endpoint(hours),
+        "llm_queries_by_model": get_llm_queries_by_model(hours)
+    })
+
 # Example: A simple dashboard HTML view (if you plan on a server-rendered dashboard)
 # Requires 'templates' folder inside 'dashboard' and 'static' for assets
 @dashboard_bp.route('/')
@@ -66,18 +77,22 @@ def dashboard_ask_llm():
     if not question:
         return jsonify({"error": "No question provided"}), 400
 
-    raw_metrics = get_metric_data()  # your function that gets metric data
-    context = f"Current metrics:\n{raw_metrics}"
+    try:
+        raw_metrics = get_metric_data()
+        context = f"Current metrics:\n{raw_metrics}"
 
-    messages = [
-        {"role": "system", "content": "You are a medical admin dashboard assistant. Interpret metrics and answer dashboard queries clearly."},
-        {"role": "user", "content": f"{context}\n\nQ: {question}"}
-    ]
+        messages = [
+            {"role": "system", "content": "You are a medical admin dashboard assistant. Interpret metrics and answer dashboard queries clearly."},
+            {"role": "user", "content": f"{context}\n\nQ: {question}"}
+        ]
 
-    answer = generate_response(messages)
-
-    # If answer is generator, join to string before jsonify
-    if hasattr(answer, '__iter__') and not isinstance(answer, str):
-        answer = ''.join(answer)
-
-    return jsonify({"answer": answer})
+        answer = generate_response(messages)
+        
+        # Handle both string and generator responses
+        if hasattr(answer, '__iter__') and not isinstance(answer, str):
+            answer = ''.join(answer)
+        
+        return jsonify({"answer": answer or "No response generated"})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
