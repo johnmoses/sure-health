@@ -9,8 +9,6 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
 
-    # patient = db.relationship('Patient', back_populates='user', uselist=False)
-
     def set_password(self, pw):
         self.password_hash = generate_password_hash(pw)
 

@@ -5,7 +5,7 @@ from app.common.validators import (
 
 class PatientSchema(Schema):
     id = fields.Integer(dump_only=True)
-    user_id = fields.Integer(required=True)
+    user_id = fields.Integer()
     fhir_id = fields.String(dump_only=True)
     
     # PHI Fields - require special handling
@@ -59,6 +59,8 @@ class PatientSchema(Schema):
 
 class PatientCreateSchema(PatientSchema):
     """Schema for creating new patients with required fields"""
+    user_id = fields.Integer(required=True)
+    
     class Meta:
         exclude = ('id', 'fhir_id', 'created_at', 'updated_at', 'is_active')
 

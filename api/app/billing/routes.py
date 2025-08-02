@@ -37,12 +37,23 @@ def get_invoice(invoice_id):
 @billing_bp.route('/invoices', methods=['GET'])
 @jwt_required()
 def list_invoices():
-    patient_id = request.args.get('patient_id', type=int)
-    query = Invoice.query
-    if patient_id:
-        query = query.filter_by(patient_id=patient_id)
-    invoices = query.all()
-    return jsonify(invoices_schema.dump(invoices))
+    try:
+        patient_id = request.args.get('patient_id', type=int)
+        query = Invoice.query
+        if patient_id:
+            query = query.filter_by(patient_id=patient_id)
+        invoices = query.all()
+        result = [{
+            'id': inv.id,
+            'patient_id': inv.patient_id,
+            'amount': float(inv.amount),
+            'status': inv.status,
+            'created_at': inv.created_at.isoformat() if inv.created_at else None,
+            'due_date': inv.due_date.isoformat() if inv.due_date else None
+        } for inv in invoices]
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Update Invoice
 @billing_bp.route('/invoices/<int:invoice_id>', methods=['PUT'])

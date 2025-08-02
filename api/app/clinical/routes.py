@@ -9,6 +9,10 @@ clinical_bp = Blueprint('clinical', __name__)
 
 observation_schema = ObservationSchema()
 observations_schema = ObservationSchema(many=True)
+encounter_schema = EncounterSchema()
+encounters_schema = EncounterSchema(many=True)
+appointment_schema = AppointmentSchema()
+appointments_schema = AppointmentSchema(many=True)
 
 @clinical_bp.route('/observations', methods=['POST'])
 @jwt_required()
@@ -109,3 +113,68 @@ def delete_observation(fhir_id):
     db.session.delete(obs)
     db.session.commit()
     return '', 204
+
+# Encounters endpoints
+@clinical_bp.route('/encounters', methods=['GET'])
+@jwt_required()
+def list_encounters():
+    patient_id = request.args.get('patient_id', type=int)
+    query = Encounter.query
+    if patient_id:
+        query = query.filter_by(patient_id=patient_id)
+    encounters = query.all()
+    return jsonify(encounters_schema.dump(encounters))
+
+@clinical_bp.route('/encounters', methods=['POST'])
+@jwt_required()
+def create_encounter():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No input data provided"}), 400
+    
+    try:
+        encounter = Encounter(**data)
+        db.session.add(encounter)
+        db.session.commit()
+        return jsonify(encounter_schema.dump(encounter)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# Appointments endpoints
+@clinical_bp.route('/appointments', methods=['GET'])
+@jwt_required()
+def list_appointments():
+    try:
+        patient_id = request.args.get('patient_id', type=int)
+        query = Appointment.query
+        if patient_id:
+            query = query.filter_by(patient_id=patient_id)
+        appointments = query.all()
+        result = [{
+            'id': a.id,
+            'patient_id': a.patient_id,
+            'appointment_datetime': a.appointment_datetime.isoformat() if a.appointment_datetime else None,
+            'status': a.status,
+            'practitioner': a.practitioner,
+            'reason': a.reason
+        } for a in appointments]
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch appointments", "details": str(e)}), 422
+
+@clinical_bp.route('/appointments', methods=['POST'])
+@jwt_required()
+def create_appointment():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No input data provided"}), 400
+    
+    try:
+        appointment = Appointment(**data)
+        db.session.add(appointment)
+        db.session.commit()
+        return jsonify(appointment_schema.dump(appointment)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

@@ -25,7 +25,7 @@ db_path = "./milvus_rag.db"
 collection_name = "sure_health_collection"
 embedding_dim = 384
 
-def init_llama_model(model_path: str, n_ctx: int = 4096, n_gpu_layers: int = 0, verbose: bool = False):
+def init_llama_model(model_path: str, n_ctx: int = 4096, n_gpu_layers: int = 0, n_threads: int = 4, use_mlock: bool = False, verbose: bool = False):
     """
     Initializes the global Llama model instance.
     Raises RuntimeError if initialization fails.
@@ -70,7 +70,7 @@ def init_milvus_client(db_path=db_path, collection=collection_name, dim=embeddin
         # Ensure directory exists
         pathlib.Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
-        _milvus_client = MilvusClient(db_path)
+        _milvus_client = MilvusClient(uri=db_path)
 
         try:
             _milvus_client.create_collection(

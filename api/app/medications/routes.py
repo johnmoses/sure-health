@@ -29,12 +29,23 @@ def create_prescription():
 @medications_bp.route('/prescriptions', methods=['GET'])
 @jwt_required()
 def list_prescriptions():
-    patient_id = request.args.get('patient_id', type=int)
-    query = Prescription.query
-    if patient_id:
-        query = query.filter_by(patient_id=patient_id)
-    rxs = query.all()
-    return jsonify(prescriptions_schema.dump(rxs))
+    try:
+        patient_id = request.args.get('patient_id', type=int)
+        query = Prescription.query
+        if patient_id:
+            query = query.filter_by(patient_id=patient_id)
+        rxs = query.all()
+        result = [{
+            'id': rx.id,
+            'patient_id': rx.patient_id,
+            'medication_name': rx.medication_name,
+            'dosage': rx.dosage,
+            'status': rx.status,
+            'start_date': rx.start_date.isoformat() if rx.start_date else None
+        } for rx in rxs]
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch prescriptions", "details": str(e)}), 422
 
 @medications_bp.route('/counseling', methods=['POST'])
 @jwt_required()

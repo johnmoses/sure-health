@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import { AuthProvider } from '../xlib/auth';
+import Navbar from '../components/Navbar';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SureHealth - EHR System",
-  description: "Electronic Health Records Management System",
+  title: "SureHealth - AI-Powered Healthcare Platform",
+  description: "Comprehensive healthcare management with AI and modern technology",
 };
 
 export default function RootLayout({
@@ -26,14 +26,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AuthProvider>
+          <Navbar />
+          <main className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
+            {children}
+          </main>
+        </AuthProvider>
       </body>
     </html>
   );

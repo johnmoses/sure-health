@@ -98,9 +98,20 @@ def delete_patient(id):
 @patients_bp.route('', methods=['GET'])
 @jwt_required()
 def list_patients():
-    patients = Patient.query.all()
-    result = patients_schema.dump(patients)
-    return jsonify(result)
+    try:
+        patients = Patient.query.all()
+        result = [{
+            'id': p.id,
+            'first_name': p.first_name,
+            'last_name': p.last_name,
+            'gender': p.gender,
+            'date_of_birth': p.date_of_birth.isoformat() if p.date_of_birth else None,
+            'phone': p.phone,
+            'email': p.email
+        } for p in patients]
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": "Failed to fetch patients", "details": str(e)}), 422
 
 @patients_bp.route('/<int:patient_id>/summary', methods=['GET'])
 @jwt_required()

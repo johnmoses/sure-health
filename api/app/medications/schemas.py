@@ -3,8 +3,8 @@ from marshmallow import Schema, fields
 class PrescriptionSchema(Schema):
     id = fields.Int(dump_only=True)
     fhir_id = fields.Str(dump_only=True)
-    patient_id = fields.Int(required=True)
-    medication_name = fields.Str(required=True)
+    patient_id = fields.Int()
+    medication_name = fields.Str()
     dosage = fields.Str()
     frequency = fields.Str()
     route = fields.Str()

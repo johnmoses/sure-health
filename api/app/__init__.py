@@ -10,8 +10,7 @@ from app.extensions import (
     socketio,
     ma,
     init_milvus_client, 
-    init_embed_model,
-    init_llama_model
+    init_embed_model
 )
 from app.auth.models import User
 from app.common.hipaa_middleware import HIPAAMiddleware
@@ -21,6 +20,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
     CORS(app, supports_credentials=True, origins=["http://localhost:3000"])
+
 
     # --- Initialize Flask extensions ---
     db.init_app(app)
@@ -34,11 +34,11 @@ def create_app():
     
     # Initialize rate limiting for HIPAA compliance
     limiter = Limiter(
-        app,
         key_func=get_remote_address,
         default_limits=["100 per hour", "20 per minute"],
         storage_uri=app.config.get("RATELIMIT_STORAGE_URL", "memory://")
     )
+    limiter.init_app(app)
     
     # Register error handlers
     register_error_handlers(app)
@@ -55,14 +55,14 @@ def create_app():
     from app.common.health import health_bp
 
     app.register_blueprint(health_bp)
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(chat_bp, url_prefix="/chat")
-    app.register_blueprint(patients_bp, url_prefix="/patients")
-    app.register_blueprint(clinical_bp, url_prefix="/clinical")
-    app.register_blueprint(medications_bp, url_prefix="/medications")
-    app.register_blueprint(billing_bp, url_prefix="/billing")
-    app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
-    app.register_blueprint(llm_bp, url_prefix="/llm")
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(chat_bp, url_prefix="/api/chat")
+    app.register_blueprint(patients_bp, url_prefix="/api/patients")
+    app.register_blueprint(clinical_bp, url_prefix="/api/clinical")
+    app.register_blueprint(medications_bp, url_prefix="/api/medications")
+    app.register_blueprint(billing_bp, url_prefix="/api/billing")
+    app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
+    app.register_blueprint(llm_bp, url_prefix="/api/llm")
 
     # --- JWT Token Revocation (Blacklist) ---
     @jwt.token_in_blocklist_loader
@@ -76,18 +76,17 @@ def create_app():
         db.create_all()
 
         # Ensure 'bot' user exists for AI/RAG interactions
-        # Note: 'email' field might not exist in your User model, check models.py
         bot = User.query.filter_by(username="bot").first()
         if not bot:
             try:
-                # Assuming your User model has username, role, and password
-                bot = User(username="bot", email="bot@bot", role="bot") 
-                bot.set_password("bot_password_here") # Set a secure default password
+                bot = User(username="bot", email="bot@surehealth.ai", role="bot") 
+                bot.set_password("secure_bot_password_2024") 
                 db.session.add(bot)
                 db.session.commit()
                 app.logger.info("Created 'bot' user.")
             except Exception as e:
                 app.logger.error(f"Failed to create 'bot' user: {e}", exc_info=True)
+                db.session.rollback()
 
 
         # Initialize Milvus Client and Collection 
@@ -123,22 +122,8 @@ def create_app():
         except Exception as e:
             app.logger.error(f"Failed to initialize embedding model: {e}", exc_info=True)
 
-        # Initialize Llama Model
-        try:
-            llama_model_path = app.config.get("LLAMA_MODEL_PATH")
-            if not llama_model_path:
-                app.logger.warning("LLAMA_MODEL_PATH not configured. Llama model will not be loaded.")
-            else:
-                # Add n_ctx, n_gpu_layers if you configure them
-                init_llama_model(
-                    model_path=llama_model_path,
-                    n_ctx=app.config.get("LLAMA_N_CTX", 4096), # Example for adding n_ctx from config
-                    n_gpu_layers=app.config.get("LLAMA_N_GPU_LAYERS", 0) # Example for GPU layers
-                )
-                app.logger.info("Llama model initialized successfully.")
-        except Exception as e:
-            app.logger.error(f"Failed to initialize Llama model: {e}", exc_info=True)
-            # This might be critical, consider raising error if Llama is essential
+        # Llama Model - using lazy loading to prevent segfault
+        app.logger.info("Llama model will be loaded on first use (lazy loading).")
 
     return app
 

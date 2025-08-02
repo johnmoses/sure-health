@@ -5,8 +5,6 @@ from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
     unset_jwt_cookies,
-    set_access_cookies,
-    set_refresh_cookies,
 )
 from app.extensions import db
 from app.auth.models import User
@@ -21,9 +19,19 @@ users_schema = UserSchema(many=True)
 
 # List users
 @auth_bp.route("/users", methods=["GET"])
+@jwt_required()
 def list_users():
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+    if not current_user or current_user.role != 'admin':
+        return jsonify({"error": "Admin access required"}), 403
     users = User.query.all()
-    return jsonify(users_schema.dump(users))
+    result = users_schema.dump(users)
+    return jsonify({
+        "status": "success",
+        "data": result,
+        "count": len(result)
+    })
 
 
 # User registration
@@ -68,7 +76,8 @@ def login():
         return jsonify({"error": "Invalid username or password"}), 401
 
     additional_claims = {"roles": [user.role]}
-    access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=1), additional_claims=additional_claims)
+    access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=1), additional_claims=additional_claims)
+    refresh_token = create_refresh_token(identity=str(user.id), expires_delta=timedelta(days=7), additional_claims=additional_claims)
     refresh_token = create_refresh_token(identity=user.id, expires_delta=timedelta(days=7), additional_claims=additional_claims)
 
     return jsonify({
@@ -82,7 +91,7 @@ def login():
 @auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
 def refresh():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     additional_claims = {"roles": []}  # or get from previous token if needed
     access_token = create_access_token(identity=current_user_id, expires_delta=timedelta(hours=1), additional_claims=additional_claims)
     return jsonify({"access_token": access_token}), 200
@@ -98,7 +107,6 @@ def profile():
         return jsonify({"error": "User not found"}), 404
     return jsonify(user_schema.dump(user))
 
-
 # Update user info (excluding password)
 @auth_bp.route("/profile", methods=["PUT"])
 @jwt_required()
@@ -112,10 +120,15 @@ def update_profile():
     if not data:
         return jsonify({"error": "No input data provided"}), 400
 
-    # Only allow update for certain fields here
-    allowed_fields = {"username", "email", "role"}
+    # Only allow update for certain fields
+    allowed_fields = {"username", "email"}
     for field in allowed_fields:
         if field in data:
+            # Check for duplicates
+            if field == "username" and User.query.filter_by(username=data[field]).filter(User.id != user.id).first():
+                return jsonify({"error": "Username already exists"}), 409
+            if field == "email" and User.query.filter_by(email=data[field]).filter(User.id != user.id).first():
+                return jsonify({"error": "Email already registered"}), 409
             setattr(user, field, data[field])
 
     db.session.commit()
@@ -147,7 +160,14 @@ def change_password():
 
 # Logout (invalidate JWT tokens by returning expired cookies - stateless JWT)
 @auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
 def logout():
+    from flask_jwt_extended import get_jwt
+    from app.extensions import jwt_blacklist
+    
+    jti = get_jwt()["jti"]
+    jwt_blacklist.add(jti)
+    
     response = jsonify({"message": "Logged out successfully"})
     unset_jwt_cookies(response)
     return response
