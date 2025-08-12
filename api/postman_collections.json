@@ -1,0 +1,771 @@
+{
+  "info": {
+    "name": "SureHealth API",
+    "_postman_id": "e7f4a618-1234-5678-9abc-9876543210ab",
+    "description": "Complete SureHealth EHR API with HIPAA compliance, AI/LLM integration, and comprehensive healthcare endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "item": [
+    {
+      "name": "Health & System",
+      "description": "Health checks and system monitoring endpoints",
+      "item": [
+        {
+          "name": "Basic Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Detailed Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/health/detailed",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["health", "detailed"]
+            }
+          }
+        },
+        {
+          "name": "System Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5001/metrics",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["metrics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "users"]
+            }
+          }
+        },
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": {
+              "raw": "http://localhost:5001/auth/register",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"TestPass123!\",\n  \"role\": \"patient\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "http://localhost:5001/auth/login", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["auth", "login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{refresh_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/refresh",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/profile",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/profile",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "profile"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newemail@example.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/change-password",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "change-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"old_password\": \"TestPass123!\",\n  \"new_password\": \"NewPass456!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/auth/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "description": "Multi-party chat endpoints",
+      "item": [
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/chat/rooms", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms"] },
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Cardiology Consults\" }" }
+          }
+        },
+        {
+          "name": "List Rooms",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/chat/rooms", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms"] }
+          }
+        },
+        {
+          "name": "Join Room",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/chat/rooms/1/participants", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms", "1", "participants"] }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/chat/rooms/1/messages", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["chat", "rooms", "1", "messages"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello, when is the next appointment?\",\n  \"role\": \"patient\",\n  \"is_ai\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Messages",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "http://localhost:5001/chat/rooms/1/messages",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "rooms", "1", "messages"]
+            }
+          }
+        },
+        {
+          "name": "Post Message with AI Bot Reply",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/chat/rooms/1/post_message",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "rooms", "1", "post_message"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"I have been experiencing chest pain. What should I do?\",\n  \"role\": \"patient\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Start Telemedicine Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/chat/rooms/1/telemed/start",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "rooms", "1", "telemed", "start"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_url\": \"https://meet.jit.si/surehealth-room-1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "End Telemedicine Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/chat/telemed/1/end",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["chat", "telemed", "1", "end"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "description": "Patients domain endpoints",
+      "item": [
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/patients", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"date_of_birth\": \"1985-03-16\",\n  \"gender\": \"male\",\n  \"phone\": \"5551234567\",\n  \"email\": \"john.doe@example.com\",\n  \"medical_record_number\": \"MRN12345\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Patient",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/patients/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1"] }
+          }
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/patients/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"phone\": \"+1234567890\" }"
+            }
+          }
+        },
+        {
+          "name": "Delete Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/patients/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["patients", "1"] }
+          }
+        },
+        {
+          "name": "List All Patients",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "http://localhost:5001/patients",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["patients"]
+            }
+          }
+        },
+        {
+          "name": "Get Patient Summary (LLM)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "http://localhost:5001/patients/1/summary",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["patients", "1", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clinical",
+      "description": "Clinical domain endpoints",
+      "item": [
+        {
+          "name": "List Observations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/clinical/observations", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations"] }
+          }
+        },
+        {
+          "name": "Create Observation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/clinical/observations", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"code\": \"blood_pressure\",\n  \"value\": \"120/80\",\n  \"unit\": \"mmHg\",\n  \"effective_datetime\": \"2024-01-15T10:30:00\",\n  \"status\": \"final\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Observation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] }
+          }
+        },
+        {
+          "name": "Update Observation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"130/85\",\n  \"status\": \"amended\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Observation",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/clinical/observations/abcdef1234", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "observations", "abcdef1234"] }
+          }
+        },
+        {
+          "name": "Summarize Clinical Notes (LLM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/clinical/notes/summary", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["clinical", "notes", "summary"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"notes\": \"The patient shows improvement in blood pressure after medication adjustment.\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Medications",
+      "description": "Medications blueprint CRUD and counseling",
+      "item": [
+        {
+          "name": "Create Prescription",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/medications/prescriptions", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["medications", "prescriptions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"medication_name\": \"Atorvastatin\",\n  \"dosage\": \"10 mg\",\n  \"frequency\": \"once daily\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Prescriptions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/medications/prescriptions", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["medications", "prescriptions"] }
+          }
+        },
+        {
+          "name": "Medication Counseling (LLM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/medications/counseling", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["medications", "counseling"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"medication\": \"Atorvastatin\" }"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "description": "Billing invoices and payments CRUD + LLM explanation",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/billing/invoices", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_id\": 1,\n  \"amount\": 250.00,\n  \"status\": \"pending\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Invoice",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1"] }
+          }
+        },
+        {
+          "name": "Update Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"paid\" }"
+            }
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices"] }
+          }
+        },
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/billing/payments", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "payments"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoice_id\": 1,\n  \"amount\": 100.00,\n  \"method\": \"credit card\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Payments for Invoice",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1/payments", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1", "payments"] }
+          }
+        },
+        {
+          "name": "Explain Invoice (LLM)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/billing/invoices/1/explain", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["billing", "invoices", "1", "explain"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "LLM & AI",
+      "description": "Direct LLM and AI model interactions",
+      "item": [
+        {
+          "name": "Generate Response",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/llm/generate",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["llm", "generate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a helpful medical assistant.\"},\n    {\"role\": \"user\", \"content\": \"What are the symptoms of hypertension?\"}\n  ],\n  \"max_tokens\": 512,\n  \"temperature\": 0.7\n}"
+            }
+          }
+        },
+        {
+          "name": "Health Check LLM",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": {
+              "raw": "http://localhost:5001/llm/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5001",
+              "path": ["llm", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Dashboard metrics and LLM natural language queries",
+      "item": [
+        {
+          "name": "Get Metrics Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": { "raw": "http://localhost:5001/dashboard/metrics/summary", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["dashboard", "metrics", "summary"] }
+          }
+        },
+        {
+          "name": "Ask LLM About Metrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "url": { "raw": "http://localhost:5001/dashboard/metrics/ask-llm", "protocol": "http", "host": ["localhost"], "port": "5001", "path": ["dashboard", "metrics", "ask-llm"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"How many new patients were registered this month?\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patient_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract JWT token from login response",
+          "if (pm.info.requestName === 'Login User') {",
+          "    pm.sendRequest({",
+          "        url: pm.variables.get('base_url') + '/auth/login',",
+          "        method: 'POST',",
+          "        header: {'Content-Type': 'application/json'},",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                username: 'testuser',",
+          "                password: 'TestPass123!'",
+          "            })",
+          "        }",
+          "    }, function (err, res) {",
+          "        if (!err && res.json().access_token) {",
+          "            pm.collectionVariables.set('jwt_token', res.json().access_token);",
+          "            pm.collectionVariables.set('refresh_token', res.json().refresh_token);",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-extract tokens from login response",
+          "if (pm.info.requestName === 'Login User' && pm.response.code === 200) {",
+          "    const responseJson = pm.response.json();",
+          "    if (responseJson.access_token) {",
+          "        pm.collectionVariables.set('jwt_token', responseJson.access_token);",
+          "    }",
+          "    if (responseJson.refresh_token) {",
+          "        pm.collectionVariables.set('refresh_token', responseJson.refresh_token);",
+          "    }",
+          "    if (responseJson.user && responseJson.user.id) {",
+          "        pm.collectionVariables.set('user_id', responseJson.user.id);",
+          "    }",
+          "}",
+          "",
+          "// Test response status",
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});"
+        ]
+      }
+    }
+  ]
+}
