@@ -1,3 +1,5 @@
+<p align="center"><img src="brand-sure-health.png" alt="SureHealth Banner"></p>
+
 # 🏥 SureHealth - AI-Powered Healthcare Platform
 
 > A comprehensive healthcare management system integrating blockchain technology, AI/LLM capabilities, and modern web technologies for secure, intelligent patient care.
